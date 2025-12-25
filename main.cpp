@@ -39,6 +39,10 @@ public:
             hp = 0;
         }
     }
+    
+    bool is_alive() const {
+        return hp > 0;
+    }
 
     virtual int get_attack_power() const {
         return 10;
@@ -122,14 +126,14 @@ void Battle(Player& p, Enemy& e) {
         e.info();
         cout << "-------------------------------------------" << endl;
 
-        if (p.get_hp() == 0) {
+        if (!p.is_alive()) {
             cout << endl;
             cout << "=== Battle Finished ===" << endl;
             cout << "Winner: " << e.get_name() << endl;
             break;
         }
 
-        if (e.get_hp() == 0) {
+        if (!e.is_alive()) {
             cout << endl;
             cout << "=== Battle Finished ===" << endl;
             cout << "Winner: " << p.get_name() << endl;
