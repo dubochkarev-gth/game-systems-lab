@@ -106,15 +106,54 @@ void Battle(Player& p, Enemy& e) {
     p.info();
     e.info();
 
+    bool attackBonusReady = false;
+    const float ATTACK_BONUS_MULTIPLIER = 1.5f;
+    const float DEFENSE_BONUS_MULTIPLIER = 0.5f;
+    int playerChoice = 0;
+
+    
     while (true) {
         int dmgToEnemy = p.hit();
         int dmgToPlayer = e.hit();
 
-        e.take_damage(dmgToEnemy);
-        cout << p.get_name() << " hits "
-             << e.get_name()
-             << " for " << dmgToEnemy << " damage" << endl;
-
+        cout << "Player make a choice: 1 - attack, 2 - defence (bonus to next attack)." << endl;
+        cout << "Your choice?" << endl;
+        cin >> playerChoice;
+        
+        while (playerChoice == 2 && attackBonusReady) {
+            cout << "You are already focused! Spend it to attack!" << endl;
+            cout << "Player make a choice: 1 - attack, 2 - defence (bonus to next attack)." << endl;
+            cout << "Your choice?" << endl;
+            cin >> playerChoice;
+        }
+        
+        while (playerChoice != 1 && playerChoice != 2){
+            cout << "Wrong Input!!!!!!" << endl;
+            cout << "Player make a choice: 1 - attack, 2 - defence (bonus to next attack)." << endl;
+            cout << "Your choice?" << endl;
+            cin >> playerChoice;
+        } 
+        
+        if (playerChoice == 1){
+            if (!attackBonusReady){
+                e.take_damage(dmgToEnemy);
+            }
+            else {
+                dmgToEnemy *= ATTACK_BONUS_MULTIPLIER;
+                e.take_damage(dmgToEnemy);
+                attackBonusReady = false;
+            }
+            
+            cout << p.get_name() << " hits "
+            << e.get_name()
+            << " for " << dmgToEnemy << " damage" << endl;
+        }
+        
+        if (playerChoice == 2){
+           attackBonusReady = true;
+           dmgToPlayer *= DEFENSE_BONUS_MULTIPLIER;
+        }
+        
         p.take_damage(dmgToPlayer);
         cout << e.get_name() << " hits "
              << p.get_name()
