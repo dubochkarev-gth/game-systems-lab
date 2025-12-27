@@ -220,9 +220,9 @@ void Battle(Player& p, Enemy& e) {
             break;
         }
         
-        //cout << "\nPress Enter to continue...";
-        //cin.ignore();
-        //cin.get();
+        cout << "\nPress Enter to continue...";
+        cin.ignore();
+        cin.get();
     }
 }
 
