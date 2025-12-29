@@ -245,7 +245,7 @@ void Battle(Player& p, Enemy& e) {
     while (true) {
         renderBattleScreen(p, e, log);
 
-        cout << "Player make a choice: 1 - attack, 2 - block (reduce incoming damag)." << endl;
+        cout << "Player make a choice: 1 - attack, 2 - block (reduce incoming damage)." << endl;
         cout << "Your choice?" << endl;
         cin >> playerChoice;
         
@@ -253,7 +253,7 @@ void Battle(Player& p, Enemy& e) {
               
         while (playerChoice != 1 && playerChoice != 2){
             cout << "Wrong Input!!!!!!" << endl;
-            cout << "Player make a choice: 1 - attack, 2 - block (reduce incoming damag)." << endl;
+            cout << "Player make a choice: 1 - attack, 2 - block (reduce incoming damage)." << endl;
             cout << "Your choice?" << endl;
             cin >> playerChoice;
         } 
