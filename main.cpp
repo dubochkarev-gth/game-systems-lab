@@ -13,11 +13,6 @@ int randomInt(int min, int max) {
     return dist(gen);
 }
 
-struct BattleLog {
-    string playerAction;
-    string enemyAction;
-};
-
 // clear screen helper
 void clearScreen() {
 #ifdef _WIN32
@@ -25,6 +20,34 @@ void clearScreen() {
 #else
     system("clear");
 #endif
+};
+
+enum class ActionType{
+    Attack,
+    Heal,
+    Skip
+};
+
+struct ActionResult {
+    ActionType type;
+    string actor;
+    string target;
+
+    int damage = 0;
+    bool isCritical = false;
+    bool targetDied = false;
+};
+
+struct BattleLog {
+    ActionResult playerAction;
+    ActionResult enemyAction;
+    bool hasPlayerAction = false;
+    bool hasEnemyAction = false;
+
+    void clear() {
+        hasPlayerAction = false;
+        hasEnemyAction = false;
+    }
 };
 
 // --------------------
@@ -62,11 +85,31 @@ public:
         return 10;
     }
 
-    int hit() {
-        return randomInt(1, get_attack_power());
+    virtual void info() const = 0;
+
+    ActionResult attack(Entity& target){
+        ActionResult result;
+
+        result.type = ActionType::Attack;
+        result.actor = name;
+        result.target = target.get_name();
+
+        int dmg = randomInt(1, get_attack_power());
+
+    // крит — пока простой
+        bool crit = randomInt(1, 100) <= 20;
+    if (crit) {
+        dmg *= 2;
+        result.isCritical = true;
     }
 
-    virtual void info() const = 0;
+    target.take_damage(dmg);
+
+    result.damage = dmg;
+    result.targetDied = !target.is_alive();
+
+    return result;
+    }
 };
 
 // --------------------
@@ -133,11 +176,33 @@ void renderBattleScreen(
 
     cout << "\n--- Last turn ---\n";
 
-    if (!log.playerAction.empty())
-        cout << log.playerAction << endl;
+    if (log.hasPlayerAction) {
+    const ActionResult& r = log.playerAction;
+    cout << r.actor << " hits " << r.target
+         << " for " << r.damage;
 
-    if (!log.enemyAction.empty())
-        cout << log.enemyAction << endl;
+    if (r.isCritical)
+        cout << " (CRITICAL)";
+
+    cout << endl;
+
+    if (r.targetDied)
+        cout << r.target << " is defeated!" << endl;
+}
+
+    if (log.hasEnemyAction) {
+    const ActionResult& v = log.enemyAction;
+    cout << v.actor << " hits " << v.target
+         << " for " << v.damage;
+
+    if (v.isCritical)
+        cout << " (CRITICAL)";
+
+    cout << endl;
+
+    if (v.targetDied)
+        cout << v.target << " is defeated!" << endl;
+}
 
     cout << "\n--------------------\n";
 }
@@ -152,7 +217,7 @@ void Battle(Player& p, Enemy& e) {
     const float DEFENSE_BONUS_MULTIPLIER = 0.5f;
     
     int playerChoice = 0;
-    
+  
     BattleLog log;
     
     while (true) {
@@ -162,7 +227,7 @@ void Battle(Player& p, Enemy& e) {
         cout << "Your choice?" << endl;
         cin >> playerChoice;
         
-        log = {};
+        log.clear();
         
         while (playerChoice == 2 && attackBonusReady) {
             cout << "You are already focused! Spend it to attack!" << endl;
@@ -177,34 +242,24 @@ void Battle(Player& p, Enemy& e) {
             cout << "Your choice?" << endl;
             cin >> playerChoice;
         } 
-        
-        int dmgToEnemy = p.hit();
-        int dmgToPlayer = e.hit();
-        
+              
         if (playerChoice == 1){
             if (!attackBonusReady){
-                e.take_damage(dmgToEnemy);
+                log.playerAction = p.attack(e);
             }
             else {
-                dmgToEnemy *= ATTACK_BONUS_MULTIPLIER;
-                e.take_damage(dmgToEnemy);
+                log.playerAction = p.attack(e);
                 attackBonusReady = false;
             }
-            
-            log.playerAction = p.get_name() + " hits "
-            + e.get_name() + " for " + to_string(dmgToEnemy);
+            log.hasPlayerAction = true;
         }
         
         if (playerChoice == 2){
-           attackBonusReady = true;
-           dmgToPlayer *= DEFENSE_BONUS_MULTIPLIER;
-           log.playerAction = p.get_name() + " takes defensive stance";
+           attackBonusReady = true;  
         }
         
-        p.take_damage(dmgToPlayer);
-        log.enemyAction =
-            e.get_name() + " hits " + p.get_name() +
-            " for " + to_string(dmgToPlayer);
+        log.enemyAction = e.attack(p);
+        log.hasEnemyAction = true;
 
         if (!p.is_alive()) {
             cout << endl;
