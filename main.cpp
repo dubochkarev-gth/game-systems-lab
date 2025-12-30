@@ -37,6 +37,7 @@ struct ActionResult {
     int damage = 0;
     bool isCritical = false;
     bool targetDied = false;
+    bool usedFocus = false;
 };
 
 struct BattleLog {
@@ -59,6 +60,7 @@ protected:
     int hp;
     string name;
     bool isBlocking = false;
+    int focus = 0;
 
 public:
     Entity(string n, int h)
@@ -70,6 +72,19 @@ public:
 
     string get_name() const {
         return name;
+    }
+
+    bool has_focus() const{
+        if (focus > 0) return true;
+        else return false;
+    }
+
+    void add_focus(int amount){
+        focus += amount;
+    }
+
+    void consume_focus(){
+        focus = 0;
     }
 
     int take_damage(int dmg) {
@@ -103,6 +118,7 @@ public:
 
     ActionResult attack(Entity& target){
         ActionResult result;
+        const float FOCUS_BONUS_MULTIPLIER = 1.5f;
 
         result.type = ActionType::Attack;
         result.actor = name;
@@ -115,6 +131,11 @@ public:
     if (crit) {
         dmg *= 2;
         result.isCritical = true;
+    }
+    if (has_focus()) {
+        dmg *= FOCUS_BONUS_MULTIPLIER;
+        consume_focus();
+        result.usedFocus = true;
     }
 
     result.damage = target.take_damage(dmg);
@@ -129,6 +150,7 @@ public:
         result.actor = name;
 
         isBlocking = true;
+        add_focus(1);
 
         return result;
     }
@@ -201,7 +223,12 @@ void renderBattleScreen(
 
         if (r.isCritical)
             cout << " (CRITICAL)";
+
+        if (r.usedFocus)
+            cout << " (FOCUSED)";
+
         }
+      
 
         if(r.type == ActionType::Block){
             cout << r.actor << " blocks "
@@ -235,9 +262,7 @@ void renderBattleScreen(
 // Battle
 // --------------------
 void Battle(Player& p, Enemy& e) {
-
-    bool attackBonusReady = false;
-        
+          
     int playerChoice = 0;
   
     BattleLog log;
@@ -245,7 +270,7 @@ void Battle(Player& p, Enemy& e) {
     while (true) {
         renderBattleScreen(p, e, log);
 
-        cout << "Player make a choice: 1 - attack, 2 - block (reduce incoming damage)." << endl;
+        cout << "Player make a choice: 1 - attack, 2 - block (reduce incoming damage and add focus)." << endl;
         cout << "Your choice?" << endl;
         cin >> playerChoice;
         
@@ -253,7 +278,7 @@ void Battle(Player& p, Enemy& e) {
               
         while (playerChoice != 1 && playerChoice != 2){
             cout << "Wrong Input!!!!!!" << endl;
-            cout << "Player make a choice: 1 - attack, 2 - block (reduce incoming damage)." << endl;
+            cout << "Player make a choice: 1 - attack, 2 - block (reduce incoming damage and add focus)." << endl;
             cout << "Your choice?" << endl;
             cin >> playerChoice;
         } 
