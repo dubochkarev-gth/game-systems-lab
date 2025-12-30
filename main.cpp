@@ -239,7 +239,7 @@ void renderBattleScreen(
 
     if (r.targetDied)
         cout << r.target << " is defeated!" << endl;
-}
+    }
 
     if (log.hasEnemyAction) {
     const ActionResult& v = log.enemyAction;
@@ -253,7 +253,7 @@ void renderBattleScreen(
 
     if (v.targetDied)
         cout << v.target << " is defeated!" << endl;
-}
+    }
 
     cout << "\n--------------------\n";
 }
