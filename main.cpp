@@ -34,8 +34,13 @@ void clearScreen() {
 enum class ActionType{
     Attack,
     Heal,
-    Block,
-    Skip
+    Block
+};
+
+enum class AIState {
+    Aggressive,
+    Defensive,
+    Desperate
 };
 
 //STRUCTS
@@ -86,9 +91,8 @@ public:
     }
 
     bool has_focus() const{
-        if (focus > 0) return true;
-        else return false;
-    }
+        return focus > 0;
+        }
 
     void add_focus(int amount){
         focus += amount;
@@ -185,6 +189,46 @@ public:
     }
 };
 
+// Decision making for Enemy
+
+class EnemyAI{
+    private:
+    AIState state = AIState::Aggressive;
+
+    public:
+    void update(const Entity& self)
+    {
+        int hp = self.get_hp();
+
+        if (hp < 20)
+            state = AIState::Desperate;
+        else if (hp < 40)
+            state = AIState::Defensive;
+        else
+            state = AIState::Aggressive;
+    }
+
+    ActionType decideAction(const Entity& self) const 
+    {
+        switch (state) {
+            case AIState::Aggressive:
+                return ActionType::Attack;
+
+            case AIState::Defensive:
+                return randomInt(0, 1) == 0
+                    ? ActionType::Block
+                    : ActionType::Attack;
+
+            case AIState::Desperate:
+                return self.has_focus()
+                    ? ActionType::Attack
+                    : ActionType::Block;
+    }
+    return ActionType::Attack;
+
+    }
+}; 
+
 // --------------------
 // Enemy
 // --------------------
@@ -192,6 +236,7 @@ class Enemy : public Entity {
 protected:
     int base_attack;
     int strength;
+    EnemyAI ai;
 
 public:
     Enemy(string name, int hp, int baseAtk, int str)
@@ -208,6 +253,16 @@ public:
     }
 
     //Here will be extencion for enemy behavior.
+     ActionResult takeTurn(Entity& target) {
+        ai.update(*this);
+        ActionType choice = ai.decideAction(*this);
+
+        if (choice == ActionType::Attack)
+            return attack(target);
+
+    // иначе Block
+        return block();
+    }
 };
 
 //SCREEN DRAW AFTER CALCULATION
@@ -256,13 +311,25 @@ void renderBattleScreen(
 
     if (log.hasEnemyAction) {
     const ActionResult& v = log.enemyAction;
-    cout << v.actor << " hits " << v.target
-         << " for " << v.damage;
+        if(v.type == ActionType::Attack){
+            cout << v.actor << " hits " << v.target
+            << " for " << v.damage;
 
-    if (v.isCritical)
-        cout << " (CRITICAL)";
+        if (v.isCritical)
+            cout << " (CRITICAL)";
 
-    cout << endl;
+        if (v.usedFocus)
+            cout << " (FOCUSED)";
+
+        }
+      
+
+        if(v.type == ActionType::Block){
+            cout << v.actor << " blocks "
+         << "part of incoming damage ";
+        }
+
+        cout << endl;
 
     if (v.targetDied)
         cout << v.target << " is defeated!" << endl;
@@ -309,7 +376,7 @@ void Battle(Player& p, Enemy& e) {
         }
         
         // Here should be AI switch for enemy behavior.
-        log.enemyAction = e.attack(p);
+        log.enemyAction = e.takeTurn(p);
         log.hasEnemyAction = true;
         
         // Break should be replaced, because of it last draw of screen not work.
