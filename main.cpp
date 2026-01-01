@@ -375,7 +375,7 @@ void Battle(Player& p, Enemy& e) {
            log.hasPlayerAction = true; 
         }
         
-        // Here should be AI switch for enemy behavior.
+        // AI switch for enemy behavior.
         log.enemyAction = e.takeTurn(p);
         log.hasEnemyAction = true;
         
