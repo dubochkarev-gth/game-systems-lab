@@ -1,6 +1,8 @@
 #include <iostream>
 #include <string>
 #include <random>
+#include <algorithm>
+#include <vector>
 
 using namespace std;
 
@@ -68,6 +70,13 @@ struct BattleLog {
     }
 };
 
+struct Stats {
+    int baseInitiative = 0;
+    // future:
+    // int speed;
+    // int agility;
+};
+
 // --------------------
 // Base Entity class
 // --------------------
@@ -77,10 +86,13 @@ protected:
     string name;
     bool isBlocking = false;
     int focus = 0;
+    Stats stats;
 
 public:
-    Entity(string n, int h)
-        : hp(h), name(n) {}
+    Entity(string n, int h, int baseInitiative)
+        : hp(h), name(n) {
+            stats.baseInitiative = baseInitiative;
+        }
 
     int get_hp() const {
         return hp;
@@ -167,6 +179,14 @@ public:
 
         return result;
     }
+
+    int calculateInitiative() const {
+        return stats.baseInitiative;
+    }
+
+    int getInitiative() const {
+        return calculateInitiative();
+    }
 };
 
 // --------------------
@@ -177,8 +197,8 @@ protected:
     int weapon_bonus;
 
 public:
-    Player(string name, int hp, int weapon)
-        : Entity(name, hp), weapon_bonus(weapon) {}
+    Player(string name, int hp, int baseInitiative, int weapon)
+        : Entity(name, hp, baseInitiative), weapon_bonus(weapon) {}
 
     int get_attack_power() const override {
         return 10 + weapon_bonus;
@@ -239,8 +259,8 @@ protected:
     EnemyAI ai;
 
 public:
-    Enemy(string name, int hp, int baseAtk, int str)
-        : Entity(name, hp),
+    Enemy(string name, int hp,  int baseInitiative, int baseAtk, int str)
+        : Entity(name, hp, baseInitiative),
           base_attack(baseAtk),
           strength(str) {}
 
@@ -338,62 +358,75 @@ void renderBattleScreen(
     cout << "\n--------------------\n";
 }
 
+//Initiative calculator
+
+void setupTurnOrder(const vector<Entity*>& entities,
+                    vector<Entity*>& turnOrder) {
+    turnOrder = entities;
+
+    sort(turnOrder.begin(), turnOrder.end(),
+        [](Entity* a, Entity* b) {
+            return a->getInitiative() > b->getInitiative();
+        });
+}
+
 // --------------------
 // Battle
 // --------------------
 void Battle(Player& p, Enemy& e) {
-          
-    int playerChoice = 0;
-  
+
     BattleLog log;
-    
+
+    vector<Entity*> entities = { &p, &e };
+    vector<Entity*> turnOrder;
+
+    setupTurnOrder(entities, turnOrder);
+
     while (true) {
+
+        log.clear();
+
+        for (Entity* actor : turnOrder) {
+
+            if (!actor->is_alive())
+                continue;
+
+            if (actor == &p) {
+
+                int playerChoice = 0;
+
+                while (playerChoice != 1 && playerChoice != 2) {
+                    cout << "Player make a choice: 1 - attack, 2 - block\n";
+                    cin >> playerChoice;
+                }
+
+                if (playerChoice == 1)
+                    log.playerAction = p.attack(e);
+                else
+                    log.playerAction = p.block();
+
+                log.hasPlayerAction = true;
+            }
+            else {
+                log.enemyAction = e.takeTurn(p);
+                log.hasEnemyAction = true;
+            }
+        }
+
         renderBattleScreen(p, e, log);
 
-        //Couts should be in function not just text in battle.
-
-        cout << "Player make a choice: 1 - attack, 2 - block (reduce incoming damage and add focus)." << endl;
-        cout << "Your choice?" << endl;
-        cin >> playerChoice;
-        
-        log.clear();
-              
-        while (playerChoice != 1 && playerChoice != 2){
-            cout << "Wrong Input!!!!!!" << endl;
-            cout << "Player make a choice: 1 - attack, 2 - block (reduce incoming damage and add focus)." << endl;
-            cout << "Your choice?" << endl;
-            cin >> playerChoice;
-        } 
-              
-        if (playerChoice == 1){
-            log.playerAction = p.attack(e);
-            log.hasPlayerAction = true;
-        }
-        
-        if (playerChoice == 2){
-           log.playerAction = p.block();
-           log.hasPlayerAction = true; 
-        }
-        
-        // AI switch for enemy behavior.
-        log.enemyAction = e.takeTurn(p);
-        log.hasEnemyAction = true;
-        
-        // Break should be replaced, because of it last draw of screen not work.
         if (!p.is_alive()) {
-            cout << endl;
-            cout << "=== Battle Finished ===" << endl;
+            cout << "\n=== Battle Finished ===\n";
             cout << "Winner: " << e.get_name() << endl;
             break;
         }
 
         if (!e.is_alive()) {
-            cout << endl;
-            cout << "=== Battle Finished ===" << endl;
+            cout << "\n=== Battle Finished ===\n";
             cout << "Winner: " << p.get_name() << endl;
             break;
         }
-        
+
         cout << "\nPress Enter to continue...";
         cin.ignore();
         cin.get();
@@ -404,10 +437,10 @@ void Battle(Player& p, Enemy& e) {
 // Main
 // --------------------
 int main() {
-    Player hero("Dark_Avanger", 100, 5);
+    Player hero("Dark_Avanger", 100, 10, 5);
 
-    Enemy kobold("Sneaky_Kody", 50, 5, 3);
-    Enemy orc("Gazkul_Trakka", 80, 7, 4);
+    Enemy kobold("Sneaky_Kody", 50, 15, 5, 3);
+    Enemy orc("Gazkul_Trakka", 80, 9, 7, 4);
 
     Battle(hero, orc);
 
