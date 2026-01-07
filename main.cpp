@@ -197,6 +197,10 @@ public:
     int getInitiative() const {
         return calculateInitiative();
     }
+
+    virtual ActionType decideAction(Entity& target) {
+        return ActionType::Block;
+    }
 };
 
 // --------------------
@@ -216,6 +220,19 @@ public:
 
     void info() const override {
         cout << get_name() << " HP: " << get_hp() << endl;
+    }
+
+    ActionType decideAction(Entity& target) override {
+    int playerChoice = 0;
+
+    while (playerChoice != 1 && playerChoice != 2) {
+        cout << "Player make a choice: 1 - attack, 2 - block\n";
+        cin >> playerChoice;
+    }
+
+    return (playerChoice == 1)
+            ? ActionType::Attack
+            : ActionType::Block;
     }
 };
 
@@ -294,7 +311,7 @@ public:
         return block();
     }
 
-    ActionType decideAction() {
+    ActionType decideAction(Entity& target) override {
     ai.update(*this);
     return ai.decideAction(*this);
     }
@@ -408,33 +425,17 @@ void Battle(Player& p, Enemy& e) {
         if (!actor->is_alive())
             continue;
 
-        if (actor == &p) {
+        PlannedAction action;
+        action.actor = actor;
+        action.type = actor->decideAction(
+        actor == &p ? static_cast<Entity&>(e)
+                    : static_cast<Entity&>(p)
+    );
+    action.target = (actor == &p)
+                    ? static_cast<Entity*>(&e)
+                    : static_cast<Entity*>(&p);
 
-            int playerChoice = 0;
-
-            while (playerChoice != 1 && playerChoice != 2) {
-                cout << "Player make a choice: 1 - attack, 2 - block\n";
-                cin >> playerChoice;
-            }
-
-            PlannedAction action;
-            action.actor = &p;
-            action.type = (playerChoice == 1)
-                            ? ActionType::Attack
-                            : ActionType::Block;
-            action.target = &e;
-
-            plannedActions.push_back(action);
-        }
-        else {
-            PlannedAction action;
-            action.actor = actor;
-            action.type =
-                static_cast<Enemy*>(actor)->decideAction();
-            action.target = &p;
-
-            plannedActions.push_back(action);
-        }
+    plannedActions.push_back(action);
     }
 
     // -------- Execution phase --------
