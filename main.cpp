@@ -16,7 +16,7 @@ constexpr float FOCUS_BONUS_MULTIPLIER = 1.5f;
 constexpr int CRIT_CHANCE_PERCENT = 20;
 constexpr float CRIT_MULTIPLIER = 2.0f;
 constexpr float BLOCK_BONUS_MULTIPLIER = 0.5f;
-constexpr int HEAL_AMOUNT = 10;
+constexpr int HEAL_AMOUNT = 7;
 
 // --------------------
 // Random helper
@@ -285,10 +285,15 @@ class EnemyAI{
             case AIState::Aggressive:
                 return ActionType::Attack;
 
-            case AIState::Defensive:
-                return randomInt(0, 1) == 0
-                    ? ActionType::Block
-                    : ActionType::Attack;
+            case AIState::Defensive:{
+                int roll = randomInt(0, 2);
+                if (roll == 0)
+                    return ActionType::Attack;
+                if (roll == 1)
+                    return ActionType::Heal;
+                else 
+                    return ActionType::Block;
+            }
 
             case AIState::Desperate:
                 return self.has_focus()
@@ -321,18 +326,6 @@ public:
 
     void info() const override {
         cout << get_name() << " HP: " << get_hp() << endl;
-    }
-
-    //Here will be extencion for enemy behavior.
-     ActionResult takeTurn(Entity& target) {
-        ai.update(*this);
-        ActionType choice = ai.decideAction(*this);
-
-        if (choice == ActionType::Attack)
-            return attack(target);
-
-    // иначе Block
-        return block();
     }
 
     ActionType decideAction(Entity& target) override {
@@ -408,6 +401,11 @@ void renderBattleScreen(
         if(v.type == ActionType::Block){
             cout << v.actor << " blocks "
          << "part of incoming damage ";
+        }
+
+        if (v.type == ActionType::Heal) {
+        cout << v.actor << " heals for "
+         << v.healed << " HP";
         }
 
         cout << endl;
@@ -547,7 +545,7 @@ int main() {
     Player hero("Dark_Avanger", 100, 10, 5);
 
     Enemy kobold("Sneaky_Kody", 50, 15, 5, 3);
-    Enemy orc("Gazkul_Trakka", 80, 9, 7, 4);
+    Enemy orc("Gazkul_Trakka", 90, 9, 7, 4);
 
     Battle(hero, orc);
 
