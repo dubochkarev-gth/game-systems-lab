@@ -487,9 +487,6 @@ void runBattle(Player& p, Enemy& e) {
     // -------- Execution phase --------
     for (const PlannedAction& action : plannedActions) {
 
-        if (!action.actor->is_alive())
-            continue;
-
         executeAction(action, log);
 
     }
