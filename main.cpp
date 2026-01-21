@@ -71,14 +71,14 @@ struct PlannedAction {
 };
 
 struct BattleLog {
-    ActionResult playerAction;
-    ActionResult enemyAction;
-    bool hasPlayerAction = false;
-    bool hasEnemyAction = false;
+    vector<ActionResult> actions;
 
     void clear() {
-        hasPlayerAction = false;
-        hasEnemyAction = false;
+        actions.clear();
+    }
+
+    void add(const ActionResult& result) {
+        actions.push_back(result);
     }
 };
 
@@ -366,67 +366,34 @@ void renderBattleScreen(
 
     cout << "\n--- Last turn ---\n";
 
-    if (log.hasPlayerAction) {
-        const ActionResult& r = log.playerAction;
-        if(r.type == ActionType::Attack){
-            cout << r.actor << " hits " << r.target
-            << " for " << r.damage;
+for (const ActionResult& r : log.actions) {
+
+    if (r.type == ActionType::Attack) {
+        cout << r.actor << " hits " << r.target
+             << " for " << r.damage;
 
         if (r.isCritical)
             cout << " (CRITICAL)";
 
         if (r.usedFocus)
             cout << " (FOCUSED)";
+    }
 
-        }
-      
+    if (r.type == ActionType::Block) {
+        cout << r.actor << " blocks part of incoming damage";
+    }
 
-        if(r.type == ActionType::Block){
-            cout << r.actor << " blocks "
-         << "part of incoming damage ";
-        }
-
-        if (r.type == ActionType::Heal) {
+    if (r.type == ActionType::Heal) {
         cout << r.actor << " heals for "
-         << r.healed << " HP";
-        }
+             << r.healed << " HP";
+    }
 
-        cout << endl;
+    cout << endl;
 
-    if (r.targetDied)
+    if (r.targetDied) {
         cout << r.target << " is defeated!" << endl;
     }
-
-    if (log.hasEnemyAction) {
-    const ActionResult& v = log.enemyAction;
-        if(v.type == ActionType::Attack){
-            cout << v.actor << " hits " << v.target
-            << " for " << v.damage;
-
-        if (v.isCritical)
-            cout << " (CRITICAL)";
-
-        if (v.usedFocus)
-            cout << " (FOCUSED)";
-
-        }
-      
-
-        if(v.type == ActionType::Block){
-            cout << v.actor << " blocks "
-         << "part of incoming damage ";
-        }
-
-        if (v.type == ActionType::Heal) {
-        cout << v.actor << " heals for "
-         << v.healed << " HP";
-        }
-
-        cout << endl;
-
-    if (v.targetDied)
-        cout << v.target << " is defeated!" << endl;
-    }
+}
 
     cout << "\n--------------------\n";
 }
@@ -446,44 +413,28 @@ void setupTurnOrder(const vector<Entity*>& entities,
 //Executor for battle
 
 void executeAction(const PlannedAction& action,
-                   BattleLog& log,
-                   Player& p){
+                   BattleLog& log)
+{
+    if (!action.actor || !action.actor->is_alive())
+        return;
 
-        if (action.type == ActionType::Attack) {
+    ActionResult result;
 
-            if (action.actor == &p) {
-                log.playerAction = p.attack(*action.target);
-                log.hasPlayerAction = true;
-            }
-            else {
-                log.enemyAction = action.actor->attack(*action.target);
-                log.hasEnemyAction = true;
-            }
-        }
+    switch (action.type) {
+        case ActionType::Attack:
+            result = action.actor->attack(*action.target);
+            break;
 
-        if (action.type == ActionType::Block) {
+        case ActionType::Block:
+            result = action.actor->block();
+            break;
 
-            if (action.actor == &p) {
-                log.playerAction = p.block();
-                log.hasPlayerAction = true;
-            }
-            else {
-                log.enemyAction =action.actor->block();
-                log.hasEnemyAction = true;
-            }
-        }
+        case ActionType::Heal:
+            result = action.actor->heal();
+            break;
+    }
 
-        if (action.type == ActionType::Heal) {
-            if (action.actor == &p) {
-            log.playerAction = p.heal();
-            log.hasPlayerAction = true;
-            }
-        else {
-            log.enemyAction = action.actor->heal();
-            log.hasEnemyAction = true;
-            }
-        }
-
+    log.add(result);
 };
 
 // --------------------
@@ -527,7 +478,7 @@ void Battle(Player& p, Enemy& e) {
         if (!action.actor->is_alive())
             continue;
 
-        executeAction(action, log, p);
+        executeAction(action, log);
 
     }
 
