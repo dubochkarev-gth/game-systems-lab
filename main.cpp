@@ -224,6 +224,10 @@ public:
         return result;
     }
 
+    int get_focus() const {
+        return focus;
+    }
+
 };
 
 // --------------------
@@ -242,7 +246,12 @@ public:
     }
 
     void info() const override {
-        cout << get_name() << " HP: " << get_hp() << endl;
+        cout << get_name() << " HP: " << get_hp();
+        
+        if (get_focus() > 0)
+        cout << " [Focus: " << get_focus() << "]";
+
+        cout<< endl;
     }
 
     ActionType decideAction(Entity& target) override {
@@ -325,7 +334,12 @@ public:
     }
 
     void info() const override {
-        cout << get_name() << " HP: " << get_hp() << endl;
+        cout << get_name() << " HP: " << get_hp();
+        
+        if (get_focus() > 0)
+            cout << " [Focus: " << get_focus() << "]";
+        
+        cout << endl;
     }
 
     ActionType decideAction(Entity& target) override {
