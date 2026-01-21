@@ -400,7 +400,7 @@ for (const ActionResult& r : log.actions) {
 
 //Initiative calculator
 
-void setupTurnOrder(const vector<Entity*>& entities,
+void buildTurnOrder(const vector<Entity*>& entities,
                     vector<Entity*>& turnOrder) {
     turnOrder = entities;
 
@@ -437,23 +437,16 @@ void executeAction(const PlannedAction& action,
     log.add(result);
 };
 
-// --------------------
-// Battle
-// --------------------
-void Battle(Player& p, Enemy& e) {
+// Decision function
 
-    BattleLog log;
-
-    vector<Entity*> entities = { &p, &e };
-    vector<Entity*> turnOrder;
-
-    while (true) {
-    
-    setupTurnOrder(entities, turnOrder);
-    log.clear();
+vector<PlannedAction> planTurn(
+    const vector<Entity*>& turnOrder,
+    Player& p,
+    Enemy& e
+){
     vector<PlannedAction> plannedActions;
 
-    // -------- Decision phase --------
+     // -------- Decision phase --------
     for (Entity* actor : turnOrder) {
 
         if (!actor->is_alive())
@@ -471,6 +464,25 @@ void Battle(Player& p, Enemy& e) {
 
         plannedActions.push_back(action);
     }
+    return plannedActions;
+};
+
+// --------------------
+// Battle
+// --------------------
+void runBattle(Player& p, Enemy& e) {
+
+    BattleLog log;
+
+    vector<Entity*> entities = { &p, &e };
+    vector<Entity*> turnOrder;
+
+    while (true) {
+    
+    buildTurnOrder(entities, turnOrder);
+    log.clear();
+    vector<PlannedAction> plannedActions=
+    planTurn(turnOrder, p, e);
 
     // -------- Execution phase --------
     for (const PlannedAction& action : plannedActions) {
@@ -511,7 +523,7 @@ int main() {
     Enemy kobold("Sneaky_Kody", 50, 15, 5, 3);
     Enemy orc("Gazkul_Trakka", 90, 9, 7, 4);
 
-    Battle(hero, orc);
+    runBattle(hero, orc);
 
     return 0;
 }
