@@ -285,7 +285,7 @@ public:
 
         while (playerChoice < 1 || playerChoice > 3) {
             cout << "Player make a choice:\n";
-            cout << "1 - attack\n2 - block\n3 - Use Item\n";
+            cout << "1 - Attack\n2 - Block\n3 - Use Item\n";
             cin >> playerChoice;
         }
 
