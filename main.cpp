@@ -57,8 +57,10 @@ struct ActionResult {
     string target;
 
     string itemName;
-    int damage = 0;
-    int healed = 0;
+    int damagePlanned = 0;
+    int damageApplied = 0;
+    int damageBlocked = 0;
+    int healedPlanned = 0;
     bool isCritical = false;
     bool targetDied = false;
     bool usedFocus = false;
@@ -124,6 +126,10 @@ public:
         return hp;
     }
 
+    void heal(int amount) {
+        hp = min(hp + amount, max_hp);
+    }
+
     string get_name() const {
         return name;
     }
@@ -134,6 +140,10 @@ public:
 
     void add_focus(int amount){
         focus += amount;
+    }
+
+    void set_blocking(bool block){
+        isBlocking = block;
     }
 
     void consume_focus(){
@@ -188,10 +198,8 @@ public:
         consume_focus();
         result.usedFocus = true;
     }
-
-    result.damage = target.take_damage(dmg);
-    result.targetDied = !target.is_alive();
-
+    result.damagePlanned = dmg;
+    
     return result;
     }
 
@@ -199,10 +207,7 @@ public:
         ActionResult result;
         result.type = ActionType::Block;
         result.actor = name;
-
-        isBlocking = true;
-        add_focus(1);
-
+        result.target = name;
         return result;
     }
 
@@ -244,9 +249,7 @@ public:
         result.itemName = item.name;
 
         if (item.type == ItemType::Heal) {
-            int before = hp;
-            hp = min(hp + item.power, max_hp);
-            result.healed = hp - before;
+            result.healedPlanned = item.power;
         }
 
         return result;
@@ -419,7 +422,7 @@ for (const ActionResult& r : log.actions) {
 
     if (r.type == ActionType::Attack) {
         cout << r.actor << " hits " << r.target
-             << " for " << r.damage;
+             << " for " << r.damageApplied << ".";
 
         if (r.isCritical)
             cout << " (CRITICAL)";
@@ -428,13 +431,17 @@ for (const ActionResult& r : log.actions) {
             cout << " (FOCUSED)";
     }
 
-    if (r.type == ActionType::Block) {
-        cout << r.actor << " blocks part of incoming damage";
-    }
+        if (r.type == ActionType::Block) {
+            cout << r.actor << " prepares to block";
+            }
 
-    if (r.type == ActionType::UseItem && r.healed > 0) {
+        if (r.damageBlocked > 0) {
+            cout << " " << r.target << " blocks " << r.damageBlocked << " damage";
+            }
+
+    if (r.type == ActionType::UseItem && r.healedPlanned > 0) {
     cout << r.actor << " uses " <<r.itemName << " and heals for "
-         << r.healed << " HP";
+         << r.healedPlanned << " HP";
     }
 
     cout << endl;
@@ -497,6 +504,44 @@ Entity* findFirstAliveEnemy(
     return nullptr;
 }
 
+Entity* findEntityByName(
+    const string& name,
+    const vector<Entity*>& entities
+){
+    for (Entity* e : entities)
+        if (e->get_name() == name)
+            return e;
+    return nullptr;
+}
+
+void applyActionResult(ActionResult& result,
+    Entity& target){
+    switch (result.type) {
+        case ActionType::Attack: {
+            int actualDamage = target.take_damage(result.damagePlanned);
+            result.damageApplied = actualDamage;
+            result.damageBlocked = result.damagePlanned - actualDamage;
+            result.targetDied = !target.is_alive();
+            break;
+            }
+
+        case ActionType::Block: {
+            target.set_blocking(true);
+            target.add_focus(1);
+            break;
+            }
+
+        case ActionType::UseItem: {
+            int before = target.get_hp();
+            target.heal(result.healedPlanned);
+            result.healedPlanned = target.get_hp() - before;
+            break;
+            }       
+        }
+    }
+
+            
+
 // Decision function
 
 vector<PlannedAction> planTurn(
@@ -549,6 +594,12 @@ void runBattle(Player& p, Enemy& e) {
 
         executeAction(action, log);
 
+    }
+    
+    for (ActionResult& r : log.actions) {
+        Entity* target = findEntityByName(r.target, entities);
+        if (target)
+        applyActionResult(r, *target);
     }
 
     renderBattleScreen(p, e, log, turnOrder);
