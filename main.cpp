@@ -66,7 +66,18 @@ struct ActionResult {
     bool usedFocus = false;
 };
 
+enum class TargetType {
+    Self,
+    FirstAliveEnemy
+};
+
 struct PlannedAction {
+    Entity* actor = nullptr;
+    ActionType type;
+    TargetType targetType;
+};
+
+struct ResolvedAction {
     Entity* actor = nullptr;
     ActionType type;
     Entity* target = nullptr;
@@ -468,7 +479,7 @@ void buildTurnOrder(const vector<Entity*>& entities,
 
 //Executor for battle
 
-void executeAction(const PlannedAction& action,
+void executeAction(const ResolvedAction& action,
                    BattleLog& log)
 {
     if (!action.actor || !action.actor->is_alive())
@@ -493,25 +504,26 @@ void executeAction(const PlannedAction& action,
     log.add(result);
 };
 
-Entity* findFirstAliveEnemy(
-    Entity* actor,
+vector<Entity*> resolveTargets(
+    const PlannedAction& action,
     const vector<Entity*>& entities
 ) {
-  for (Entity* e : entities) {
-        if (e != actor && e->is_alive())
-            return e;
-    }
-    return nullptr;
-}
+    vector<Entity*> result;
 
-Entity* findEntityByName(
-    const string& name,
-    const vector<Entity*>& entities
-){
-    for (Entity* e : entities)
-        if (e->get_name() == name)
-            return e;
-    return nullptr;
+    if (action.targetType == TargetType::Self) {
+        result.push_back(action.actor);
+    }
+
+    if (action.targetType == TargetType::FirstAliveEnemy) {
+        for (Entity* e : entities) {
+            if (e != action.actor && e->is_alive()) {
+                result.push_back(e);
+                break;
+            }
+        }
+    }
+
+    return result;
 }
 
 void applyActionResult(ActionResult& result,
@@ -538,16 +550,15 @@ void applyActionResult(ActionResult& result,
             break;
             }       
         }
-    }
+}
 
             
 
 // Decision function
 
 vector<PlannedAction> planTurn(
-    const vector<Entity*>& turnOrder,
-    const vector<Entity*>& entities
-){
+    const vector<Entity*>& turnOrder
+    ){
     vector<PlannedAction> plannedActions;
 
     for (Entity* actor : turnOrder) {
@@ -555,19 +566,17 @@ vector<PlannedAction> planTurn(
         if(!actor->is_alive())
         continue;
         
-
-        Entity* target = findFirstAliveEnemy(actor, entities);
-
-        if(!target)
-        continue;
-
         PlannedAction action;
         action.actor = actor;
-        action.type = actor->decideAction(*target);
-        action.target = target;
+        action.type = actor->decideAction(*actor);
+
+        if (action.type == ActionType::Attack)
+            action.targetType = TargetType::FirstAliveEnemy;
+        else
+            action.targetType = TargetType::Self;
 
         plannedActions.push_back(action);
-        }
+    }
         
     return plannedActions;
 };
@@ -595,7 +604,7 @@ void runBattle(Player& p, Enemy& e) {
     buildTurnOrder(entities, turnOrder);
     log.clear();
     vector<PlannedAction> plannedActions=
-    planTurn(turnOrder, entities);
+    planTurn(turnOrder);
     
     for (PlannedAction& action : plannedActions){
 
@@ -604,17 +613,24 @@ void runBattle(Player& p, Enemy& e) {
 
         startTurn(*action.actor);
 
-        size_t before = log.actions.size();
+        vector<Entity*> targets = resolveTargets(action, entities);
 
-        executeAction(action, log);
+            for (Entity* target : targets) {
 
-        if (log.actions.size() > before) {
-        ActionResult& last = log.actions.back();
-        Entity* target = findEntityByName(last.target, entities);
+                size_t before = log.actions.size();
 
-        if (target)
-            applyActionResult(last, *target);
-        }
+                ResolvedAction resolved;
+                resolved.actor = action.actor;
+                resolved.type = action.type;
+                resolved.target = target;
+
+                executeAction(resolved, log);
+
+            if (log.actions.size() > before) {
+                ActionResult& last = log.actions.back();
+                applyActionResult(last, *target);
+            }
+            }
 
         endTurn(*action.actor);
     }
