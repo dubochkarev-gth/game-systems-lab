@@ -572,6 +572,14 @@ vector<PlannedAction> planTurn(
     return plannedActions;
 };
 
+void startTurn(Entity& e) {
+    // future: status tick, regen, focus decay
+};
+
+void endTurn(Entity& e) {
+    // future: cleanup, state transitions
+};
+
 // --------------------
 // Battle
 // --------------------
@@ -588,20 +596,29 @@ void runBattle(Player& p, Enemy& e) {
     log.clear();
     vector<PlannedAction> plannedActions=
     planTurn(turnOrder, entities);
+    
+    for (PlannedAction& action : plannedActions){
 
-    // -------- Execution phase --------
-    for (const PlannedAction& action : plannedActions) {
+        if (!action.actor || !action.actor->is_alive())
+            continue;
+
+        startTurn(*action.actor);
+
+        size_t before = log.actions.size();
 
         executeAction(action, log);
 
-    }
-    
-    for (ActionResult& r : log.actions) {
-        Entity* target = findEntityByName(r.target, entities);
-        if (target)
-        applyActionResult(r, *target);
-    }
+        if (log.actions.size() > before) {
+        ActionResult& last = log.actions.back();
+        Entity* target = findEntityByName(last.target, entities);
 
+        if (target)
+            applyActionResult(last, *target);
+        }
+
+        endTurn(*action.actor);
+    }
+   
     renderBattleScreen(p, e, log, turnOrder);
 
     if (!p.is_alive()) {
