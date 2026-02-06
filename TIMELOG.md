@@ -1,8 +1,9 @@
 Time Tracking
 
-Approximatly spend 23h
+Approximatly spend 24h
 
 Log:
+[CORE] Remove target from decideAction #23 fix ~ 1h
 Enemy invenotry update ~ 50 min.
 State/event split ~ 1h
 Explicit turn lifecycle (StartTurn / EndTurn) #21 ~ 20 min
