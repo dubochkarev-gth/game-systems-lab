@@ -559,7 +559,12 @@ void applyActionResult(ActionResult& result,
         }
 }
 
-            
+TargetType  targetTypeSelection(ActionType a){
+        if (a == ActionType::Attack)
+            return TargetType::FirstAliveEnemy;
+        else
+            return TargetType::Self;     
+}            
 
 // Decision function
 
@@ -576,12 +581,7 @@ vector<PlannedAction> planTurn(
         PlannedAction action;
         action.actor = actor;
         action.type = actor->decideAction();
-
-        if (action.type == ActionType::Attack)
-            action.targetType = TargetType::FirstAliveEnemy;
-        else
-            action.targetType = TargetType::Self;
-
+        action.targetType = targetTypeSelection(action.type);
         plannedActions.push_back(action);
     }
         
