@@ -230,7 +230,7 @@ public:
         return calculateInitiative();
     }
 
-    virtual ActionType decideAction(Entity& target) {
+    virtual ActionType decideAction() {
         return ActionType::Block;
     }
 
@@ -292,7 +292,7 @@ public:
         cout<< endl;
     }
 
-    ActionType decideAction(Entity& target) override {
+    ActionType decideAction() override {
         int playerChoice = 0;
 
         while (playerChoice < 1 || playerChoice > 3) {
@@ -324,11 +324,15 @@ public:
 class EnemyAI{
     private:
     AIState state = AIState::Aggressive;
+    bool canHeal = false;
+    bool hasFocus = false;
+
 
     public:
-    void update(const Entity& self)
+    void update(int hp, bool canHealNow, bool hasFocusNow)
     {
-        int hp = self.get_hp();
+        canHeal = canHealNow;
+        hasFocus = hasFocusNow;
 
         if (hp < 20)
             state = AIState::Desperate;
@@ -338,7 +342,7 @@ class EnemyAI{
             state = AIState::Aggressive;
     }
 
-    ActionType decideAction(const Entity& self) const 
+    ActionType decideAction() const 
     {
         switch (state) {
             case AIState::Aggressive:
@@ -348,15 +352,14 @@ class EnemyAI{
                 int roll = randomInt(0, 1);
                 if (roll == 0)
                     return ActionType::Attack;
-                else if (self.hasItems())
-                        return ActionType::UseItem;
-                    return ActionType::Block;
+                if (canHeal)
+                    return ActionType::UseItem;
+                return ActionType::Block;
             }
 
             case AIState::Desperate:
-                return self.has_focus()
-                    ? ActionType::Attack
-                    : ActionType::Block;
+                return hasFocus ? ActionType::Attack
+                                : ActionType::Block;
     }
     return ActionType::Attack;
 
@@ -391,9 +394,13 @@ public:
         cout << endl;
     }
 
-    ActionType decideAction(Entity& target) override {
-    ai.update(*this);
-    return ai.decideAction(*this);
+    ActionType decideAction() override {
+     ai.update(
+        get_hp(),
+        hasItems(),
+        has_focus()
+    );
+    return ai.decideAction();
     }
 };
 
@@ -568,7 +575,7 @@ vector<PlannedAction> planTurn(
         
         PlannedAction action;
         action.actor = actor;
-        action.type = actor->decideAction(*actor);
+        action.type = actor->decideAction();
 
         if (action.type == ActionType::Attack)
             action.targetType = TargetType::FirstAliveEnemy;
