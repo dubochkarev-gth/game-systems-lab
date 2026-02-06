@@ -1,8 +1,9 @@
 Time Tracking
 
-Approximatly spend 24h
+Approximatly spend 24h 15m
 
 Log:
+[CORE] Action ? TargetType mapping abstraction #24 fix ~ 15 min
 [CORE] Remove target from decideAction #23 fix ~ 1h
 Enemy invenotry update ~ 50 min.
 State/event split ~ 1h
