@@ -64,6 +64,7 @@ struct ActionResult {
     bool isCritical = false;
     bool targetDied = false;
     bool usedFocus = false;
+    bool cancelled = false;
 };
 
 enum class TargetType {
@@ -437,7 +438,11 @@ void renderBattleScreen(
     cout << "\n--- Last turn ---\n";
 
 for (const ActionResult& r : log.actions) {
-
+    if (r.cancelled){
+        cout << r.actor << " tries to attack, but " << r.target 
+        << " is already dead";
+        continue;
+    }
     if (r.type == ActionType::Attack) {
         cout << r.actor << " hits " << r.target
              << " for " << r.damageApplied << ".";
@@ -630,6 +635,22 @@ void runBattle(Player& p, Enemy& e) {
                 resolved.actor = action.actor;
                 resolved.type = action.type;
                 resolved.target = target;
+
+                if (resolved.type == ActionType::Attack &&
+                    resolved.target &&
+                    !resolved.target->is_alive())
+                    {
+                        
+                    ActionResult cancelledResult;
+                    cancelledResult.type = ActionType::Attack;
+                    cancelledResult.actor = resolved.actor->get_name();
+                    cancelledResult.target = resolved.target->get_name();
+                    cancelledResult.cancelled = true;
+
+                    log.add(cancelledResult);
+                    continue;
+                    
+                }
 
                 executeAction(resolved, log);
 
