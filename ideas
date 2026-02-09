@@ -1,0 +1,80 @@
+# Ideas Snapshot
+
+This file captures current design directions under consideration.
+Nothing here is final. The purpose is preservation, not commitment.
+
+---
+
+## IDEA A — Session-based Sandbox
+
+**Core thought**  
+A session-based game where the player interacts with a living system through information, decisions, and consequences.
+
+**What defines it**
+- The world exists and evolves independently of the player
+- The player receives signals (news, events, reports)
+- Decisions are made based on interpretation, not execution
+- Consequences may be delayed or indirect
+- Reputation and access are primary forms of progression
+
+**Player experience**
+- Understanding what is happening
+- Making sense of incomplete information
+- Feeling like a participant in a larger system
+
+**Strengths**
+- Mechanics-first, minimal reliance on visuals
+- Strong fit for text-based events and investigation
+- High systemic coherence
+
+**Risks**
+- Harder to keep sessions varied
+- Combat may become secondary or unnecessary
+- Requires clear feedback on consequences
+
+---
+
+## IDEA B — Hub + Combat Configuration
+
+**Core thought**  
+A session-based game where the main interest lies in assembling and refining a functional configuration in a hub, then testing it in combat.
+
+**What defines it**
+- Hub as a place for thinking and planning
+- Small number of specialized units or archetypes
+- Each unit has clear strengths and weaknesses
+- Power emerges from combinations, not individual dominance
+- Combat serves as validation of the configuration
+
+**Key inspiration**
+- Limited but meaningful skill choices
+- Strong specialization
+- Tactical clarity
+- Desire for "magic" as rule modification, not damage
+
+**Player experience**
+- Building a team that compensates for its own weaknesses
+- Iterating on configurations between sessions
+- Learning through failure and adjustment
+
+**Risks**
+- Easy to overload with systems
+- Risk of becoming a generic tactics roguelike
+- Requires very clear combat readability
+
+---
+
+## Shared Constraints
+
+- Explicit session structure (30–60 minutes)
+- Mechanics over graphics
+- Clear rules and predictable systems
+- Player interest should survive without visual spectacle
+
+---
+
+## Current State
+
+No active hypothesis selected.
+Both ideas are intentionally kept separate.
+The next step is to choose one for focused exploration.
