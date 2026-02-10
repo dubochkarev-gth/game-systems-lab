@@ -538,6 +538,41 @@ vector<Entity*> resolveTargets(
     return result;
 }
 
+bool validateAction(
+    const PlannedAction& action,
+    Entity* target,
+    ActionResult& outResult
+) {
+    outResult.actor = action.actor ? action.actor->get_name() : "unknown";
+    outResult.target = target ? target->get_name() : "none";
+    outResult.type = action.type;
+    outResult.cancelled = true;
+
+    // 1. Actor must be alive
+    if (!action.actor || !action.actor->is_alive()) {
+        return false;
+    }
+
+    // 2. Target required for attack
+    if (action.type == ActionType::Attack && !target) {
+        return false;
+    }
+
+    // 3. Target must be alive for attack
+    if (action.type == ActionType::Attack && !target->is_alive()) {
+        return false;
+    }
+
+    // 4. Item availability
+    if (action.type == ActionType::UseItem && !action.actor->hasItems()) {
+        return false;
+    }
+
+    // OK
+    outResult.cancelled = false;
+    return true;
+}
+
 void applyActionResult(ActionResult& result,
     Entity& target){
     switch (result.type) {
@@ -636,28 +671,19 @@ void runBattle(Player& p, Enemy& e) {
                 resolved.type = action.type;
                 resolved.target = target;
 
-                if (resolved.type == ActionType::Attack &&
-                    resolved.target &&
-                    !resolved.target->is_alive())
-                    {
-                        
-                    ActionResult cancelledResult;
-                    cancelledResult.type = ActionType::Attack;
-                    cancelledResult.actor = resolved.actor->get_name();
-                    cancelledResult.target = resolved.target->get_name();
-                    cancelledResult.cancelled = true;
+                ActionResult validationResult;
 
-                    log.add(cancelledResult);
+                if (!validateAction(action, target, validationResult)) {
+                    log.add(validationResult);
                     continue;
-                    
                 }
 
                 executeAction(resolved, log);
 
-            if (log.actions.size() > before) {
-                ActionResult& last = log.actions.back();
-                applyActionResult(last, *target);
-            }
+                if (log.actions.size() > before) {
+                    ActionResult& last = log.actions.back();
+                    applyActionResult(last, *target);
+                }
             }
 
         endTurn(*action.actor);
