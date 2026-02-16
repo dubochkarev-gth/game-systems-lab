@@ -3,6 +3,7 @@
 #include <random>
 #include <algorithm>
 #include <vector>
+#include <limits>
 
 using namespace std;
 
@@ -36,6 +37,11 @@ void clearScreen() {
 };
 
 //ENUMS
+
+enum class Faction {
+    Player,
+    Enemy
+};
 
 enum class ActionType{
     Attack,
@@ -127,10 +133,11 @@ protected:
     int focus = 0;
     Stats stats;
     vector<Item> inventory;
+    Faction faction;
 
 public:
-    Entity(string n, int h, int baseInitiative)
-        : hp(h), max_hp(h), name(n) {
+    Entity(string n, int h, int baseInitiative, Faction f)
+        : hp(h), max_hp(h), name(n), faction(f) {
             stats.baseInitiative = baseInitiative;
         }
 
@@ -138,6 +145,10 @@ public:
         return hp;
     }
 
+    Faction getFaction() const {
+        return faction;
+    }
+    
     void heal(int amount) {
         hp = min(hp + amount, max_hp);
     }
@@ -278,7 +289,8 @@ protected:
 
 public:
     Player(string name, int hp, int baseInitiative, int weapon)
-        : Entity(name, hp, baseInitiative), weapon_bonus(weapon) {}
+    : Entity(name, hp, baseInitiative, Faction::Player),
+      weapon_bonus(weapon) {}
 
     int get_attack_power() const override {
         return 10 + weapon_bonus;
@@ -377,10 +389,10 @@ protected:
     EnemyAI ai;
 
 public:
-    Enemy(string name, int hp,  int baseInitiative, int baseAtk, int str)
-        : Entity(name, hp, baseInitiative),
-          base_attack(baseAtk),
-          strength(str) {}
+    Enemy(string name, int hp, int baseInitiative, int baseAtk, int str)
+    : Entity(name, hp, baseInitiative, Faction::Enemy),
+      base_attack(baseAtk),
+      strength(str) {}
 
     int get_attack_power() const override {
         return base_attack + strength;
@@ -408,8 +420,7 @@ public:
 //SCREEN DRAW AFTER CALCULATION
 
 void renderBattleScreen(
-    const Player& p,
-    const Enemy& e,
+    const vector<Entity*>& entities,
     const BattleLog& log,
     const vector<Entity*>& turnOrder
 ) {
@@ -417,8 +428,9 @@ void renderBattleScreen(
 
     cout << "====== BATTLE ======\n\n";
 
-    p.info();
-    e.info();
+    for (const Entity* e : entities) {
+        e->info();
+    }
 
     cout << "\n--------------------\n";
 
@@ -528,7 +540,9 @@ vector<Entity*> resolveTargets(
 
     if (action.targetType == TargetType::FirstAliveEnemy) {
         for (Entity* e : entities) {
-            if (e != action.actor && e->is_alive()) {
+            if (e != action.actor &&
+                e->is_alive() &&
+                e->getFaction() != action.actor->getFaction()) {
                 result.push_back(e);
                 break;
             }
@@ -639,28 +653,28 @@ void endTurn(Entity& e) {
 // --------------------
 // Battle
 // --------------------
-void runBattle(Player& p, Enemy& e) {
+void runBattle(vector<Entity*>& entities) {
 
     BattleLog log;
-
-    vector<Entity*> entities = { &p, &e };
     vector<Entity*> turnOrder;
 
     while (true) {
-    
-    buildTurnOrder(entities, turnOrder);
-    log.clear();
-    vector<PlannedAction> plannedActions=
-    planTurn(turnOrder);
-    
-    for (PlannedAction& action : plannedActions){
 
-        if (!action.actor || !action.actor->is_alive())
-            continue;
+        buildTurnOrder(entities, turnOrder);
+        log.clear();
 
-        startTurn(*action.actor);
+        vector<PlannedAction> plannedActions =
+            planTurn(turnOrder);
 
-        vector<Entity*> targets = resolveTargets(action, entities);
+        for (PlannedAction& action : plannedActions) {
+
+            if (!action.actor || !action.actor->is_alive())
+                continue;
+
+            startTurn(*action.actor);
+
+            vector<Entity*> targets =
+                resolveTargets(action, entities);
 
             for (Entity* target : targets) {
 
@@ -686,26 +700,39 @@ void runBattle(Player& p, Enemy& e) {
                 }
             }
 
-        endTurn(*action.actor);
-    }
-   
-    renderBattleScreen(p, e, log, turnOrder);
+            endTurn(*action.actor);
+        }
 
-    if (!p.is_alive()) {
-        cout << "\n=== Battle Finished ===\n";
-        cout << "Winner: " << e.get_name() << endl;
-        break;
-    }
+        renderBattleScreen(entities, log, turnOrder);
 
-    if (!e.is_alive()) {
-        cout << "\n=== Battle Finished ===\n";
-        cout << "Winner: " << p.get_name() << endl;
-        break;
-    }
+        // Проверка победы
+        bool playerAlive = false;
+        bool enemiesAlive = false;
 
-    cout << "\nPress Enter to continue...";
-    cin.ignore();
-    cin.get();
+        for (Entity* e : entities) {
+
+            if (e->getFaction() == Faction::Player && e->is_alive())
+                playerAlive = true;
+
+            if (e->getFaction() == Faction::Enemy && e->is_alive())
+                enemiesAlive = true;
+            }
+
+        if (!playerAlive) {
+            cout << "\n=== Battle Finished ===\n";
+            cout << "Enemies win!\n";
+            break;
+        }
+
+        if (!enemiesAlive) {
+            cout << "\n=== Battle Finished ===\n";
+            cout << "Player wins!\n";
+            break;
+        }
+
+        cout << "\nPress Enter to continue...";
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cin.get();
     }
 }
 
@@ -724,7 +751,8 @@ int main() {
     orc.addItem({ "Crude Potion", ItemType::Heal, 10 });
     orc.addItem({ "Crude Potion", ItemType::Heal, 10 });
 
-    runBattle(hero, orc);
+    vector<Entity*> battleEntities = { &hero, &kobold, &orc };
+    runBattle(battleEntities);
 
     return 0;
 }
