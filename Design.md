@@ -1,10 +1,10 @@
 # Turn-Based Tactical Roguelike
 
-## Configuration-Driven, Focus-Centered Design Document (v3)
+Configuration-Driven, Focus-Centered Design Document (v4)
 
 ---
 
-# Vision
+## Vision
 
 A session-based, turn-based tactical roguelike where the primary gameplay lies in constructing a focused combat configuration in a Hub and validating it through deterministic encounters.
 
@@ -15,19 +15,19 @@ Combat exists to expose configuration weaknesses.
 
 ---
 
-# Core Design Identity
+## Core Design Identity
 
 This project is defined by three pillars:
 
-## 1. Configuration Over Execution
+### 1. Configuration Over Execution
 
 The main strategic decisions happen before combat.
 
-## 2. Focus as the Mechanical Core
+### 2. Focus as the Mechanical Core
 
 Focus is the central tactical resource shaping combat rhythm.
 
-## 3. Trade-Off Driven Progression
+### 3. Trade-Off Driven Progression
 
 Every improvement introduces a weakness.
 
@@ -35,9 +35,8 @@ If a feature does not reinforce these pillars, it does not belong in the project
 
 ---
 
-# Core Gameplay Loop
+## Core Gameplay Loop
 
-```
 Main Menu
 ↓
 Enter Hub
@@ -53,13 +52,12 @@ Evaluate Outcome
 Return to Hub
 ↓
 Adjust Configuration
-```
 
 The loop must remain stable.
 
 ---
 
-# The Hub
+## The Hub
 
 The Hub is a configuration laboratory.
 
@@ -67,7 +65,7 @@ It is purely mechanical.
 
 No narrative, no economy, no crafting.
 
-## Hub Responsibilities
+### Hub Responsibilities
 
 * Equip weapon
 * Equip armor
@@ -79,7 +77,7 @@ The Hub must force meaningful choices.
 
 ---
 
-# Configuration Model
+## Configuration Model
 
 A configuration consists of:
 
@@ -88,13 +86,46 @@ A configuration consists of:
 * One passive effect
 * Level-up specialization choices
 
-There are no classes.
+There are no predefined classes.
 
 Identity emerges from configuration coherence.
 
 ---
 
-# The Focus System (Core Mechanic)
+## Emergent Combat Roles (Additive Layer)
+
+The game has no predefined roles or classes.
+However, coherent configurations tend to express functional combat identities.
+
+Roles are not selected.
+They emerge from mechanical emphasis.
+
+### Example Functional Roles
+
+* **Pressure Holder**
+  Focuses on survivability and threat manipulation.
+  Generates Focus through defense and stabilizes pacing.
+
+* **Burst Striker**
+  Converts accumulated Focus into high-impact attacks.
+  Fragile without defensive support.
+
+* **Tempo Controller**
+  Alters initiative, crit scaling, or enemy pacing.
+  Changes combat rhythm rather than raw output.
+
+* **Sustain Support**
+  Improves stability through healing efficiency, mitigation, or Focus amplification.
+
+These roles are not mandatory.
+
+Enemy archetypes may stress specific axes, making certain configurations more effective in specific encounters.
+
+Role identity is the result of trade-offs, not class selection.
+
+---
+
+## The Focus System (Core Mechanic)
 
 Focus is the central resource of combat.
 
@@ -103,15 +134,15 @@ Focus is the central resource of combat.
 * Generated primarily by defensive actions
 * Consumed automatically by offensive actions
 * Increases damage output
-* Can be modified by configuration
+* Influenced by configuration
 
 ### Design Intent
 
 Focus creates pacing tension:
 
-* Defensive play builds power
-* Aggressive play spends power
-* Mismanagement weakens output
+Defensive play builds power.
+Aggressive play spends power.
+Mismanagement weakens output.
 
 The question after a fight should be:
 
@@ -123,9 +154,9 @@ Not:
 
 ---
 
-# Combat System
+## Combat System
 
-## Philosophy
+### Philosophy
 
 Combat is:
 
@@ -138,7 +169,7 @@ Combat tests configuration synergy.
 
 ---
 
-## Core Actions
+### Core Actions
 
 * Attack
 * Block
@@ -157,15 +188,17 @@ Examples:
 
 ---
 
-## Critical System (Updated)
+## Critical System (Focus-Scaled)
 
-Critical hits are no longer flat RNG spikes.
+Critical hits are not flat RNG spikes.
 
 They scale with Focus.
 
 High Focus increases critical probability.
 
 This makes crits partially predictable and tactical.
+
+Randomness exists, but is influenced by player decisions.
 
 ---
 
@@ -177,9 +210,11 @@ This makes crits partially predictable and tactical.
 
 Initiative must be readable and consistent.
 
+Speed choices must introduce trade-offs.
+
 ---
 
-# Trade-Off Driven Progression
+## Trade-Off Driven Progression
 
 Level-up choices are mutually exclusive and introduce tension.
 
@@ -196,47 +231,43 @@ Every choice narrows identity.
 
 ---
 
-# Equipment Philosophy
+## Equipment Philosophy
 
 Equipment changes behavior, not just numbers.
 
-Examples:
-
-### Weapon Types
+### Weapon Examples
 
 * Burst Blade: consumes all Focus on attack
 * Sustained Blade: consumes only 1 Focus per attack
 * Risk Blade: higher crit scaling, lower base damage
 
-### Armor Types
+### Armor Examples
 
 * Guard Plate: block generates extra Focus
 * Mirror Shell: reduces incoming crit chance
 * Tempo Cloak: increases initiative, weakens block
 
 No rarity tiers.
-
 No loot inflation.
 
 ---
 
-# Dungeon System
+## Dungeon System
 
-Dungeon is a structured sequence of tests.
+Dungeon is a structured sequence of mechanical tests.
 
-## Structure
+### Structure
 
 * 5–10 rooms
 * First room safe
 * Final room boss
+* Logical node progression
 
-Rooms are logical nodes.
-
-No spatial map in MVP.
+No spatial map required for MVP.
 
 ---
 
-## Room Types
+### Room Types
 
 * Combat
 * Event
@@ -245,17 +276,20 @@ No spatial map in MVP.
 
 Rooms determine encounter type only.
 
+They do not override mechanical rules.
+
 ---
 
-# Enemy Philosophy
+## Enemy Philosophy
 
-Enemies exist to test specific weaknesses.
+Enemies exist to test specific configuration weaknesses.
 
-Enemy archetypes should stress different axes:
+Enemy archetypes stress different axes:
 
 * High burst enemies test defensive builds
 * Defensive enemies test sustained damage builds
 * Fast enemies test initiative-focused builds
+* Pressure enemies test Focus management
 
 Enemy AI states remain:
 
@@ -265,9 +299,11 @@ Enemy AI states remain:
 
 Health-threshold driven.
 
+Enemy behavior must remain readable and deterministic.
+
 ---
 
-# Inventory System
+## Inventory System
 
 Inventory is minimal.
 
@@ -277,12 +313,11 @@ Inventory is minimal.
 * Limited consumables
 
 No micromanagement.
-
 No stacking complexity.
 
 ---
 
-# Narrative Layer
+## Narrative Layer
 
 Narrative is optional and additive.
 
@@ -298,15 +333,17 @@ Text describes:
 * Choices
 * Results
 
+Mechanics always remain transparent.
+
 ---
 
-# MVP Scope
+## MVP Scope
 
 Included:
 
 * Hub configuration layer
 * Focus-centered combat
-* Trade-off level progression
+* Trade-off progression
 * Dungeon sequence
 * Text-based interface
 
@@ -314,23 +351,23 @@ Excluded:
 
 * Meta progression
 * Skill trees
-* Complex builds
+* Complex build trees
 * Save/load
 * Crafting
 
 ---
 
-# Design Anchor
+## Design Anchor
 
 When evaluating any feature, ask:
 
-Does this deepen configuration identity and reinforce Focus management?
+> Does this deepen configuration identity and reinforce Focus management?
 
 If not, it does not belong.
 
 ---
 
-# Intended Player Reflection
+## Intended Player Reflection
 
 After a failed run, the player should think:
 
@@ -342,8 +379,6 @@ or
 
 If they think:
 
-> The numbers were random
+> The numbers were random.
 
 The design has failed.
-
----
