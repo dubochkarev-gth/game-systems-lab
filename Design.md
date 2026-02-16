@@ -1,393 +1,349 @@
-Turn-Based Tactical Roguelike
-Configuration-Driven, Text-Based Design Document (v2)
-Vision
+# Turn-Based Tactical Roguelike
 
-A session-based, turn-based tactical roguelike where the primary gameplay lies in assembling and refining a functional configuration in a Hub, then validating that configuration through deterministic combat encounters.
+## Configuration-Driven, Focus-Centered Design Document (v3)
 
-The project emphasizes:
+---
 
-Mechanics-first design
+# Vision
 
-Tactical clarity and readability
+A session-based, turn-based tactical roguelike where the primary gameplay lies in constructing a focused combat configuration in a Hub and validating it through deterministic encounters.
 
-Configuration as strategic gameplay
+The game is not about mastering inputs.
+It is about assembling a coherent system of trade-offs.
 
-Combat as validation, not spectacle
+Combat exists to expose configuration weaknesses.
 
-Text as interface, not decoration
+---
 
-Expandability through additive systems
+# Core Design Identity
 
-Narrative is a flexible layer that enhances context but never controls mechanics.
+This project is defined by three pillars:
 
-Core Design Pillars
+## 1. Configuration Over Execution
 
-Configuration Is the Real Gameplay
-Strategic decisions are made in the Hub before entering the dungeon.
+The main strategic decisions happen before combat.
 
-Combat Is Validation
-Encounters test the coherence of the configuration rather than overwhelm the player with complexity.
+## 2. Focus as the Mechanical Core
 
-Power Emerges from Trade-offs
-Strength comes from specialization and synergy, not raw stat growth.
+Focus is the central tactical resource shaping combat rhythm.
 
-Deterministic & Readable Systems
-All mechanics are transparent and understandable through text alone.
+## 3. Trade-Off Driven Progression
 
-Expandable by Addition
-New features must layer on top of the existing structure without requiring system rewrites.
+Every improvement introduces a weakness.
 
-Core Gameplay Loop
+If a feature does not reinforce these pillars, it does not belong in the project.
+
+---
+
+# Core Gameplay Loop
+
+```
 Main Menu
 ↓
 Enter Hub
 ↓
-Configure Loadout / Select Modifiers
+Select Configuration (equipment + modifiers)
 ↓
 Generate Dungeon
 ↓
-Enter Room
+Room → Resolve Encounter
 ↓
-Resolve Encounter (Combat / Event / Loot)
+Evaluate Outcome
 ↓
-Return to Hub (Adjust Configuration)
+Return to Hub
 ↓
-Next Run
+Adjust Configuration
+```
 
+The loop must remain stable.
 
-The loop must remain intact.
-All new systems must reinforce this structure.
+---
 
-Game States
+# The Hub
 
-The game operates through clearly separated logical states:
+The Hub is a configuration laboratory.
 
-Main Menu
+It is purely mechanical.
 
-Hub
+No narrative, no economy, no crafting.
 
-Dungeon Exploration
+## Hub Responsibilities
 
-Combat
+* Equip weapon
+* Equip armor
+* Select limited passive modifier
+* Review previous run summary
+* Start new run
 
-Event / Narrative Choice
+The Hub must force meaningful choices.
 
-Inventory Interaction
+---
 
-Level Up
-
-Game Over
-
-Each state owns its logic.
-The UI only reflects the current state.
-
-Hub System
-
-The Hub is a strategic planning space.
-
-It is not a town, narrative location, or social system.
-It is a configuration laboratory.
-
-Hub Responsibilities
-
-Equip weapon and armor
-
-Select limited modifiers
-
-Choose specialization upgrades
-
-Review previous run results
-
-Prepare next dungeon run
-
-The Hub must remain:
-
-Minimal
-
-Text-driven
-
-Mechanically focused
-
-Configuration Philosophy
+# Configuration Model
 
 A configuration consists of:
 
-Equipment (weapon, armor)
+* Weapon modifier (offensive behavior change)
+* Armor modifier (defensive behavior change)
+* One passive effect
+* Level-up specialization choices
 
-Passive modifiers (relic-style effects)
+There are no classes.
 
-Limited specialization choices
+Identity emerges from configuration coherence.
 
-Tactical orientation (offense/defense balance)
+---
 
-Configurations must:
+# The Focus System (Core Mechanic)
 
-Contain meaningful trade-offs
+Focus is the central resource of combat.
 
-Encourage specialization
+### Rules
 
-Avoid universal dominance
+* Generated primarily by defensive actions
+* Consumed automatically by offensive actions
+* Increases damage output
+* Can be modified by configuration
 
-There are no complex build trees in MVP.
+### Design Intent
 
-Dungeon System
-Structure
+Focus creates pacing tension:
 
-5–10 rooms per run
+* Defensive play builds power
+* Aggressive play spends power
+* Mismanagement weakens output
 
-First room is safe
+The question after a fight should be:
 
-Final room is a boss
+> Did I manage Focus well?
 
-Controlled randomness
+Not:
 
-Rooms are logical nodes, not spatial grids.
+> Did I click fast enough?
 
-Room Types
+---
 
-Combat
+# Combat System
 
-Event
-
-Treasure
-
-Boss
-
-Rooms do not contain logic.
-They only determine encounter type.
-
-Player Model
-
-The player is defined by:
-
-Health
-
-Offensive capability
-
-Defensive capability
-
-Initiative
-
-Experience and Level
-
-There are no classes in MVP.
-
-Identity emerges from configuration, not predefined archetypes.
-
-Progression System
-Experience Sources
-
-Combat encounters
-
-Narrative events
-
-Level-Up Philosophy
-
-Level-ups present mutually exclusive choices that reinforce specialization.
-
-Examples:
-
-Increase attack but reduce defense
-
-Improve Focus generation but lower initiative
-
-Safer blocks but weaker critical potential
-
-Progression must create divergence between runs.
-
-Flat stat growth without trade-offs is discouraged.
-
-Inventory System
-Philosophy
-
-Inventory exists to modify configuration decisions, not to create management overhead.
-
-Small and readable
-
-No sorting systems
-
-No weight systems
-
-No rarity tiers in MVP
-
-Equipment Rules
-
-One weapon equipped
-
-One armor equipped
-
-Limited passive modifiers
-
-Consumables removed on use
-
-Items should modify behavior rather than simply increase numbers.
-
-Examples:
-
-Block generates additional Focus
-
-Critical chance scales with Focus
-
-Healing consumes Focus instead of item
-
-Combat System
-Philosophy
+## Philosophy
 
 Combat is:
 
-Turn-based
+* Turn-based
+* Initiative-driven
+* Deterministic
+* Fully logged in text
 
-Initiative-driven
+Combat tests configuration synergy.
 
-Fully text-logged
+---
 
-Deterministic and readable
+## Core Actions
 
-Combat validates configuration choices.
-It must not rely on visual spectacle.
+* Attack
+* Block
+* Heal
 
-Core Actions
+Actions are universal.
 
-Attack
+Configuration modifies their behavior.
 
-Block
+Examples:
 
-Heal
+* Block generates extra Focus
+* Attack consumes all Focus for burst
+* Heal consumes Focus instead of item
+* Critical chance scales with Focus
 
-Each action produces a clear textual result.
+---
 
-Focus System
+## Critical System (Updated)
 
-Focus is a temporary tactical resource.
+Critical hits are no longer flat RNG spikes.
 
-Generated through defensive actions
+They scale with Focus.
 
-Automatically consumed by offensive actions
+High Focus increases critical probability.
 
-Grants damage bonus
+This makes crits partially predictable and tactical.
 
-Encourages pacing and planning
+---
 
-Focus reinforces deliberate play rather than button-spamming.
+## Initiative
 
-Critical Hits
+* Recalculated each round
+* Modifiable through configuration
+* Can trade speed for survivability
 
-Flat chance system
+Initiative must be readable and consistent.
 
-Damage multiplier
+---
 
-Explicitly logged
+# Trade-Off Driven Progression
 
-Initiative
+Level-up choices are mutually exclusive and introduce tension.
 
-Determines turn order
+Examples:
 
-Recalculated each round
+* +Attack, -Defense
+* Faster initiative, lower max HP
+* More Focus generation, weaker crit scaling
+* Stronger block, slower turns
 
-Simple and predictable
+No pure stat growth.
 
-Enemy Behavior
+Every choice narrows identity.
 
-Enemies operate using internal states:
+---
 
-Aggressive
+# Equipment Philosophy
 
-Defensive
+Equipment changes behavior, not just numbers.
 
-Desperate
+Examples:
 
-State transitions are health-threshold based.
+### Weapon Types
 
-Enemy design must reinforce configuration testing.
+* Burst Blade: consumes all Focus on attack
+* Sustained Blade: consumes only 1 Focus per attack
+* Risk Blade: higher crit scaling, lower base damage
 
-Narrative & Text Layer
+### Armor Types
 
-Narrative is:
+* Guard Plate: block generates extra Focus
+* Mirror Shell: reduces incoming crit chance
+* Tempo Cloak: increases initiative, weakens block
 
-Contextual
+No rarity tiers.
 
-Flexible
+No loot inflation.
 
-Expandable
+---
 
-Narrative never overrides mechanical systems.
+# Dungeon System
 
-Text is responsible for:
+Dungeon is a structured sequence of tests.
 
-Describing context
+## Structure
 
-Presenting numbered choices
+* 5–10 rooms
+* First room safe
+* Final room boss
 
-Communicating outcomes
+Rooms are logical nodes.
 
-Narrative depth is secondary to mechanical clarity.
+No spatial map in MVP.
 
-UI Philosophy
+---
 
-The UI is purely text-driven.
+## Room Types
 
-Responsibilities:
+* Combat
+* Event
+* Treasure
+* Boss
 
-Display descriptions
+Rooms determine encounter type only.
 
-Display numbered choices
+---
 
-Handle player input
+# Enemy Philosophy
 
-Display combat logs
+Enemies exist to test specific weaknesses.
 
-No windows, overlays, or complex layouts.
+Enemy archetypes should stress different axes:
 
-MVP Scope Included
+* High burst enemies test defensive builds
+* Defensive enemies test sustained damage builds
+* Fast enemies test initiative-focused builds
 
-Hub configuration layer
+Enemy AI states remain:
 
-Dungeon generation
+* Aggressive
+* Defensive
+* Desperate
 
-Turn-based combat
+Health-threshold driven.
 
-Inventory system
+---
 
-Leveling with trade-offs
+# Inventory System
 
-Text-based interface
+Inventory is minimal.
 
-Explicitly Excluded
+* One weapon
+* One armor
+* One passive
+* Limited consumables
 
-Saving/loading
+No micromanagement.
 
-Meta-progression
+No stacking complexity.
 
-Skill trees
+---
 
-Complex builds
+# Narrative Layer
 
-World map
+Narrative is optional and additive.
 
-Crafting systems
+It must never:
 
-Procedural stat scaling
+* Override mechanics
+* Introduce hidden rules
+* Control outcomes invisibly
 
-Planned Extensions
+Text describes:
 
-Future layers may include:
+* Context
+* Choices
+* Results
 
-External data-driven content (JSON)
+---
 
-Status effects
+# MVP Scope
 
-Equipment synergies
+Included:
 
-Conditional narrative events
+* Hub configuration layer
+* Focus-centered combat
+* Trade-off level progression
+* Dungeon sequence
+* Text-based interface
 
-Skill checks
+Excluded:
 
-These must be added without breaking the core loop.
+* Meta progression
+* Skill trees
+* Complex builds
+* Save/load
+* Crafting
 
-Design Anchor
+---
 
-When adding any new feature, always ask:
+# Design Anchor
 
-Does this strengthen configuration as strategic gameplay and combat as validation?
+When evaluating any feature, ask:
 
-If the answer is no, the feature does not belong in this project.
+Does this deepen configuration identity and reinforce Focus management?
+
+If not, it does not belong.
+
+---
+
+# Intended Player Reflection
+
+After a failed run, the player should think:
+
+> My configuration lacked coherence.
+
+or
+
+> I mismanaged Focus.
+
+If they think:
+
+> The numbers were random
+
+The design has failed.
+
+---
