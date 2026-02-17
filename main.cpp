@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <vector>
 #include <limits>
+#include <unordered_map>
 
 using namespace std;
 
@@ -37,6 +38,24 @@ void clearScreen() {
 };
 
 //ENUMS
+
+enum class BattleResult {
+    PlayerWin,
+    EnemyWin
+};
+
+struct FighterStats {
+    string name;
+    int damageDealt = 0;
+    int damageBlocked = 0;
+    int healingDone = 0;
+};
+
+struct BattleSummary {
+    BattleResult result;
+    int rounds = 0;
+    vector<FighterStats> fighters;
+};
 
 enum class Faction {
     Player,
@@ -286,6 +305,7 @@ public:
 class Player : public Entity {
 protected:
     int weapon_bonus;
+    bool autoMode = false;
 
 public:
     Player(string name, int hp, int baseInitiative, int weapon)
@@ -294,6 +314,10 @@ public:
 
     int get_attack_power() const override {
         return 10 + weapon_bonus;
+    }
+
+    void setAutoMode(bool value) {
+        autoMode = value;
     }
 
     void info() const override {
@@ -306,29 +330,45 @@ public:
     }
 
     ActionType decideAction() override {
-        int playerChoice = 0;
 
-        while (playerChoice < 1 || playerChoice > 3) {
-            cout << "Player make a choice:\n";
-            cout << "1 - Attack\n2 - Block\n3 - Use Item\n";
-            cin >> playerChoice;
-        }
+    if (autoMode) {
+        // Простая логика автобоя
 
-        if (playerChoice == 1)
+        if (get_hp() < 30 && hasItems())
+            return ActionType::UseItem;
+
+        if (has_focus())
             return ActionType::Attack;
 
-        if (playerChoice == 2)
-            return ActionType::Block;
+        int roll = randomInt(1, 100);
+        return (roll <= 70) ? ActionType::Attack : ActionType::Block;
+    }
 
-        if (playerChoice == 3) {
-            if (!hasItems()) {
+    // ===== interactive режим =====
+
+    int playerChoice = 0;
+
+    while (playerChoice < 1 || playerChoice > 3) {
+        cout << "Player make a choice:\n";
+        cout << "1 - Attack\n2 - Block\n3 - Use Item\n";
+        cin >> playerChoice;
+    }
+
+    if (playerChoice == 1)
+        return ActionType::Attack;
+
+    if (playerChoice == 2)
+        return ActionType::Block;
+
+    if (playerChoice == 3) {
+        if (!hasItems()) {
             cout << "No items left!\n";
             return ActionType::Block;
-            }
+        }
         return ActionType::UseItem;
     }
 
-    return ActionType::Block; // safety net
+    return ActionType::Block;
 }
 };
 
@@ -653,12 +693,25 @@ void endTurn(Entity& e) {
 // --------------------
 // Battle
 // --------------------
-void runBattle(vector<Entity*>& entities) {
+BattleSummary runBattle(vector<Entity*>& entities, bool interactive) {
+
+    BattleSummary summary;
+    unordered_map<string, FighterStats> statsMap;
+
+    for (Entity* e : entities) {
+        FighterStats fs;
+        fs.name = e->get_name();
+        statsMap[e->get_name()] = fs;
+    }
 
     BattleLog log;
     vector<Entity*> turnOrder;
 
+    int roundCounter = 0;
+
     while (true) {
+
+        roundCounter++;
 
         buildTurnOrder(entities, turnOrder);
         log.clear();
@@ -697,13 +750,16 @@ void runBattle(vector<Entity*>& entities) {
                 if (log.actions.size() > before) {
                     ActionResult& last = log.actions.back();
                     applyActionResult(last, *target);
+                    statsMap[last.actor].damageDealt += last.damageApplied;
+                    statsMap[last.target].damageBlocked += last.damageBlocked;
+                    statsMap[last.actor].healingDone += last.healedPlanned;
                 }
             }
 
             endTurn(*action.actor);
         }
-
-        renderBattleScreen(entities, log, turnOrder);
+        if (interactive)
+            renderBattleScreen(entities, log, turnOrder);
 
         // Проверка победы
         bool playerAlive = false;
@@ -719,21 +775,42 @@ void runBattle(vector<Entity*>& entities) {
             }
 
         if (!playerAlive) {
-            cout << "\n=== Battle Finished ===\n";
-            cout << "Enemies win!\n";
+            summary.result = BattleResult::EnemyWin;
+
+            if (interactive) {
+                cout << "\n=== Battle Finished ===\n";
+                cout << "Enemies win!\n";
+            }
+
             break;
         }
 
         if (!enemiesAlive) {
-            cout << "\n=== Battle Finished ===\n";
-            cout << "Player wins!\n";
-            break;
+        summary.result = BattleResult::PlayerWin;
+
+            if (interactive) {
+                cout << "\n=== Battle Finished ===\n";
+                cout << "Player wins!\n";
+            }
+
+        break;
         }
 
-        cout << "\nPress Enter to continue...";
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        cin.get();
+        if (interactive) {
+            cout << "\nPress Enter to continue...";
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cin.get();
+        }
+
+     
     }
+    summary.rounds = roundCounter;
+
+    for (auto& pair : statsMap) {
+        summary.fighters.push_back(pair.second);
+    }
+
+return summary;
 }
 
 // --------------------
@@ -752,7 +829,26 @@ int main() {
     orc.addItem({ "Crude Potion", ItemType::Heal, 10 });
 
     vector<Entity*> battleEntities = { &hero, &kobold, &orc };
-    runBattle(battleEntities);
+
+    hero.setAutoMode(true);
+    BattleSummary summary = runBattle(battleEntities, false);
+
+    cout << "\n=== Battle Summary ===\n";
+
+    cout << "Winner: ";
+        if (summary.result == BattleResult::PlayerWin)
+            cout << "Player\n";
+        else
+            cout << "Enemies\n";
+            cout << "Rounds: " << summary.rounds << "\n";
+
+    for (const auto& f : summary.fighters) {
+        cout << f.name
+            << " | Dealt: " << f.damageDealt
+            << " | Blocked: " << f.damageBlocked
+            << " | Healed: " << f.healingDone
+            << endl;
+        }
 
     return 0;
 }
