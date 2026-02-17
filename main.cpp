@@ -49,6 +49,7 @@ struct FighterStats {
     int damageDealt = 0;
     int damageBlocked = 0;
     int healingDone = 0;
+    int remainingHP = 0;
 };
 
 struct BattleSummary {
@@ -806,6 +807,10 @@ BattleSummary runBattle(vector<Entity*>& entities, bool interactive) {
     }
     summary.rounds = roundCounter;
 
+    for (Entity* e : entities) {
+    statsMap[e->get_name()].remainingHP = e->get_hp();
+}
+
     for (auto& pair : statsMap) {
         summary.fighters.push_back(pair.second);
     }
@@ -844,6 +849,7 @@ int main() {
 
     for (const auto& f : summary.fighters) {
         cout << f.name
+            << " | HP: " << f.remainingHP
             << " | Dealt: " << f.damageDealt
             << " | Blocked: " << f.damageBlocked
             << " | Healed: " << f.healingDone
