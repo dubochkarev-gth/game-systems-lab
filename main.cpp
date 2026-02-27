@@ -266,7 +266,6 @@ public:
 
         int dmg = randomInt(1, get_attack_power());
 
-        // крит — пока простой
         bool crit = randomInt(1, 100) <= CRIT_CHANCE_PERCENT;
         if (crit)
         {
@@ -383,10 +382,10 @@ public:
     ActionType decideAction() override
     {
 
+        // ===== auto  =====
+
         if (autoMode)
         {
-            // Простая логика автобоя
-
             if (get_hp() < 30 && hasItems())
                 return ActionType::UseItem;
 
@@ -397,7 +396,7 @@ public:
             return (roll <= 70) ? ActionType::Attack : ActionType::Block;
         }
 
-        // ===== interactive режим =====
+        // ===== interactive  =====
 
         int playerChoice = 0;
 
@@ -968,8 +967,8 @@ int main()
 {
     Player hero("Dark_Avanger", 100, 10, 5);
 
-    Enemy kobold("Sneaky_Kody", 50, 15, 5, 3);
-    Enemy orc("Gazkul_Trakka", 90, 9, 7, 4);
+    Enemy kobold("Sneaky_Kody", 40, 15, 5, 3);
+    Enemy orc("Gazkul_Trakka", 80, 9, 7, 4);
 
     hero.addItem({"Small Potion", ItemType::Heal, 7});
     hero.addItem({"Small Potion", ItemType::Heal, 7});
