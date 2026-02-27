@@ -1,6 +1,6 @@
 Time Tracking
 
-Approximatly spend 26h 00m
+Approximatly spend 26h 30m
 
 Log:
 [CORE] Action ? TargetType mapping abstraction #24 fix ~ 15 min
@@ -13,4 +13,5 @@ Explicit turn lifecycle (StartTurn / EndTurn) #21 ~ 20 min
 [CORE] Enemy death during round handling #26 implementation ~ 15 min
 [CORE] Validation layer for actions #25 ~ 15 min
 [Gameplay] Support multiple enemies in battle #4 implementation ~ 30 min
+[Core] Extract Battle into a dedicated class #28 ~ 30 min
 
