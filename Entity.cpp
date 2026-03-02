@@ -26,6 +26,7 @@ void Entity::info() const
 }
 
 int Entity::get_hp() const { return hp; }
+int Entity::get_max_hp() const { return max_hp; }
 int Entity::get_focus() const { return focus; }
 std::string Entity::get_name() const { return name; }
 Faction Entity::getFaction() const { return faction; }
@@ -169,7 +170,7 @@ ActionType Player::decideAction()
 {
     if (autoMode)
     {
-        if (get_hp() < max_hp * 50 / 100 && hasItems())
+        if (get_hp() < get_max_hp() * 50 / 100 && hasItems())
             return ActionType::UseItem;
 
         if (has_focus())

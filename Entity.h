@@ -35,6 +35,7 @@ public:
     Entity(std::string n, int h, int baseInitiative, Faction f);
 
     int get_hp() const;
+    int get_max_hp () const;
     int get_focus() const;
     std::string get_name() const;
     Faction getFaction() const;
