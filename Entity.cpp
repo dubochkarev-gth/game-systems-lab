@@ -1,3 +1,4 @@
+// --- Entity.cpp ---
 #include "Entity.h"
 #include <algorithm>
 #include <iostream>

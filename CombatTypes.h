@@ -1,3 +1,4 @@
+// --- CombatTypes.h ---
 #pragma once
 #include <string>
 
