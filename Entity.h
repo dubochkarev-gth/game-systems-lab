@@ -1,0 +1,126 @@
+#pragma once
+#include <string>
+#include <vector>
+#include "CombatTypes.h"
+
+// Forward declarations
+enum class ActionType;
+struct ActionResult;
+
+enum class Faction
+{
+    Player,
+    Enemy
+};
+
+enum class ItemType
+{
+    Heal
+};
+
+struct Item
+{
+    std::string name;
+    ItemType type;
+    int power;
+};
+
+struct Stats
+{
+    int baseInitiative = 0;
+};
+
+class Entity
+{
+protected:
+    int hp;
+    int max_hp;
+    std::string name;
+    bool isBlocking = false;
+    int focus = 0;
+    Stats stats;
+    std::vector<Item> inventory;
+    Faction faction;
+
+public:
+    Entity(std::string n, int h, int baseInitiative, Faction f);
+
+    int get_hp() const;
+    int get_focus() const;
+    std::string get_name() const;
+    Faction getFaction() const;
+
+    bool is_alive() const;
+
+    void heal(int amount);
+    int receive_damage(int amount);
+
+    void set_blocking(bool);
+    void add_focus(int);
+    void consume_focus();
+
+    virtual int get_attack_power() const;
+    int getInitiative() const;
+
+    bool hasItems() const;
+    void addItem(const Item&);
+    bool has_focus() const;
+
+    virtual ActionType decideAction();
+    virtual ActionResult attack(Entity& target);
+    virtual ActionResult block();
+    virtual ActionResult useItem();
+    virtual void info() const;
+};
+
+class Player : public Entity
+{
+protected:
+    int weapon_bonus;
+    bool autoMode = false;
+
+public:
+    Player(std::string name, int hp, int baseInitiative, int weapon);
+
+    int get_attack_power() const override;
+    void setAutoMode(bool value);
+    void info() const override;
+    virtual ActionType decideAction() override;
+};
+
+enum class AIState
+{
+    Aggressive,
+    Defensive,
+    Desperate
+};
+
+class EnemyAI
+{
+private:
+    AIState state = AIState::Aggressive;
+    bool canHeal = false;
+    bool hasFocus = false;
+
+public:
+    void update(int hp, bool canHealNow, bool hasFocusNow);
+    ActionType decideAction() const;
+};
+
+class Enemy : public Entity
+{
+protected:
+    int base_attack;
+    int strength;
+
+public:
+    Enemy(std::string name, int hp, int baseInitiative, int baseAtk, int str);
+
+    EnemyAI ai;
+
+    int get_attack_power() const override;
+
+    ActionType decideAction() override;
+    void info() const override;
+    
+};

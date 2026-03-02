@@ -37,8 +37,8 @@ Victory depends on synergy, not individual strength.
 
 Each class has its own resource:
 
-* Tank → Guard
-* DPS → Momentum
+* Tank -> Guard
+* DPS -> Momentum
 
 Resources are:
 
@@ -79,19 +79,19 @@ If a feature does not reinforce tactical coordination and trade-offs, it does no
 
 ```
 Main Menu
-↓
+v
 Enter Hub
-↓
+v
 Configure Tank + DPS
-↓
+v
 Generate Dungeon
-↓
-Room → Resolve Encounter
-↓
+v
+Room -> Resolve Encounter
+v
 Evaluate Outcome
-↓
+v
 Return to Hub
-↓
+v
 Adjust Configuration
 ```
 
@@ -260,7 +260,7 @@ Every choice narrows identity.
 
 # Dungeon Structure (MVP)
 
-* 5–10 rooms
+* 5-10 rooms
 * First room safe
 * Final room boss
 * No spatial map required

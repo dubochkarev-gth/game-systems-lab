@@ -5,13 +5,10 @@
 #include <vector>
 #include <limits>
 #include <unordered_map>
+#include "Entity.h"
+#include "CombatTypes.h"
 
 using namespace std;
-
-// Forward Declaration;
-
-class Entity;
-
 
 // CONSTANTS
 
@@ -20,9 +17,7 @@ constexpr int CRIT_CHANCE_PERCENT = 20;
 constexpr float CRIT_MULTIPLIER = 2.0f;
 constexpr float BLOCK_BONUS_MULTIPLIER = 0.5f;
 
-// --------------------
-// Random helper
-// --------------------
+
 int randomInt(int min, int max)
 {
     static mt19937 gen(random_device{}());
@@ -40,7 +35,14 @@ void clearScreen()
 #endif
 };
 
-// ENUMS
+struct FighterStats
+{
+    std::string name;
+    int damageDealt = 0;
+    int damageBlocked = 0;
+    int healingDone = 0;
+    int remainingHP = 0;
+};
 
 enum class BattleResult
 {
@@ -48,60 +50,14 @@ enum class BattleResult
     EnemyWin
 };
 
-struct FighterStats
-{
-    string name;
-    int damageDealt = 0;
-    int damageBlocked = 0;
-    int healingDone = 0;
-    int remainingHP = 0;
-};
-
 struct BattleSummary
 {
     BattleResult result;
     int rounds = 0;
-    vector<FighterStats> fighters;
-};
-
-enum class Faction
-{
-    Player,
-    Enemy
-};
-
-enum class ActionType
-{
-    Attack,
-    UseItem,
-    Block
-};
-
-enum class AIState
-{
-    Aggressive,
-    Defensive,
-    Desperate
+    std::vector<FighterStats> fighters;
 };
 
 // STRUCTS
-
-struct ActionResult
-{
-    ActionType type;
-    string actor;
-    string target;
-
-    string itemName;
-    int damagePlanned = 0;
-    int damageApplied = 0;
-    int damageBlocked = 0;
-    int healedPlanned = 0;
-    bool isCritical = false;
-    bool targetDied = false;
-    bool usedFocus = false;
-    bool cancelled = false;
-};
 
 enum class TargetType
 {
@@ -135,384 +91,6 @@ struct BattleLog
     void add(const ActionResult &result)
     {
         actions.push_back(result);
-    }
-};
-
-struct Stats
-{
-    int baseInitiative = 0;
-    // future:
-    // int speed;
-    // int agility;
-};
-
-// Item class
-
-enum class ItemType
-{
-    Heal
-};
-
-struct Item
-{
-    string name;
-    ItemType type;
-    int power;
-};
-
-// --------------------
-// Base Entity class
-// --------------------
-class Entity
-{
-protected:
-    int hp;
-    int max_hp;
-    string name;
-    bool isBlocking = false;
-    int focus = 0;
-    Stats stats;
-    vector<Item> inventory;
-    Faction faction;
-
-public:
-    Entity(string n, int h, int baseInitiative, Faction f)
-        : hp(h), max_hp(h), name(n), faction(f)
-    {
-        stats.baseInitiative = baseInitiative;
-    }
-
-    int get_hp() const
-    {
-        return hp;
-    }
-
-    Faction getFaction() const
-    {
-        return faction;
-    }
-
-    void heal(int amount)
-    {
-        hp = min(hp + amount, max_hp);
-    }
-
-    string get_name() const
-    {
-        return name;
-    }
-
-    bool has_focus() const
-    {
-        return focus > 0;
-    }
-
-    void add_focus(int amount)
-    {
-        focus += amount;
-    }
-
-    void set_blocking(bool block)
-    {
-        isBlocking = block;
-    }
-
-    void consume_focus()
-    {
-        focus = 0;
-    }
-
-    int take_damage(int dmg)
-    {
-        int finalDamage = 0;
-
-        if (isBlocking)
-        {
-            finalDamage = dmg * BLOCK_BONUS_MULTIPLIER;
-            isBlocking = false;
-        }
-        else
-        {
-            finalDamage = dmg;
-        }
-        hp -= finalDamage;
-        if (hp < 0)
-        {
-            hp = 0;
-        }
-
-        return finalDamage;
-    }
-
-    bool is_alive() const
-    {
-        return hp > 0;
-    }
-
-    virtual int get_attack_power() const
-    {
-        return 10;
-    }
-
-    virtual void info() const = 0;
-
-    ActionResult attack(Entity &target)
-    {
-        ActionResult result;
-
-        result.type = ActionType::Attack;
-        result.actor = name;
-        result.target = target.get_name();
-
-        int dmg = randomInt(1, get_attack_power());
-
-        bool crit = randomInt(1, 100) <= CRIT_CHANCE_PERCENT;
-        if (crit)
-        {
-            dmg *= CRIT_MULTIPLIER;
-            result.isCritical = true;
-        }
-        if (has_focus())
-        {
-            dmg *= FOCUS_BONUS_MULTIPLIER;
-            consume_focus();
-            result.usedFocus = true;
-        }
-        result.damagePlanned = dmg;
-
-        return result;
-    }
-
-    ActionResult block()
-    {
-        ActionResult result;
-        result.type = ActionType::Block;
-        result.actor = name;
-        result.target = name;
-        return result;
-    }
-
-    int calculateInitiative() const
-    {
-        return stats.baseInitiative;
-    }
-
-    int getInitiative() const
-    {
-        return calculateInitiative();
-    }
-
-    virtual ActionType decideAction()
-    {
-        return ActionType::Block;
-    }
-
-    int get_focus() const
-    {
-        return focus;
-    }
-
-    virtual bool hasItems() const
-    {
-        return !inventory.empty();
-    }
-
-    void addItem(const Item &item)
-    {
-        inventory.push_back(item);
-    }
-
-    virtual ActionResult useItem()
-    {
-        ActionResult result;
-        result.type = ActionType::UseItem;
-        result.actor = name;
-        result.target = name;
-
-        if (inventory.empty())
-            return result;
-
-        Item item = inventory.front();
-        inventory.erase(inventory.begin());
-        result.itemName = item.name;
-
-        if (item.type == ItemType::Heal)
-        {
-            result.healedPlanned = item.power;
-        }
-
-        return result;
-    }
-};
-
-// --------------------
-// Player
-// --------------------
-class Player : public Entity
-{
-protected:
-    int weapon_bonus;
-    bool autoMode = false;
-
-public:
-    Player(string name, int hp, int baseInitiative, int weapon)
-        : Entity(name, hp, baseInitiative, Faction::Player),
-          weapon_bonus(weapon) {}
-
-    int get_attack_power() const override
-    {
-        return 10 + weapon_bonus;
-    }
-
-    void setAutoMode(bool value)
-    {
-        autoMode = value;
-    }
-
-    void info() const override
-    {
-        cout << get_name() << " HP: " << get_hp();
-
-        if (get_focus() > 0)
-            cout << " [Focus: " << get_focus() << "]";
-
-        cout << endl;
-    }
-
-    ActionType decideAction() override
-    {
-
-        // ===== auto  =====
-
-        if (autoMode)
-        {
-            if (get_hp() < 30 && hasItems())
-                return ActionType::UseItem;
-
-            if (has_focus())
-                return ActionType::Attack;
-
-            int roll = randomInt(1, 100);
-            return (roll <= 70) ? ActionType::Attack : ActionType::Block;
-        }
-
-        // ===== interactive  =====
-
-        int playerChoice = 0;
-
-        while (playerChoice < 1 || playerChoice > 3)
-        {
-            cout << "Player make a choice:\n";
-            cout << "1 - Attack\n2 - Block\n3 - Use Item\n";
-            cin >> playerChoice;
-        }
-
-        if (playerChoice == 1)
-            return ActionType::Attack;
-
-        if (playerChoice == 2)
-            return ActionType::Block;
-
-        if (playerChoice == 3)
-        {
-            if (!hasItems())
-            {
-                cout << "No items left!\n";
-                return ActionType::Block;
-            }
-            return ActionType::UseItem;
-        }
-
-        return ActionType::Block;
-    }
-};
-
-// Decision making for Enemy
-
-class EnemyAI
-{
-private:
-    AIState state = AIState::Aggressive;
-    bool canHeal = false;
-    bool hasFocus = false;
-
-public:
-    void update(int hp, bool canHealNow, bool hasFocusNow)
-    {
-        canHeal = canHealNow;
-        hasFocus = hasFocusNow;
-
-        if (hp < 20)
-            state = AIState::Desperate;
-        else if (hp < 40)
-            state = AIState::Defensive;
-        else
-            state = AIState::Aggressive;
-    }
-
-    ActionType decideAction() const
-    {
-        switch (state)
-        {
-        case AIState::Aggressive:
-            return ActionType::Attack;
-
-        case AIState::Defensive:
-        {
-            int roll = randomInt(0, 1);
-            if (roll == 0)
-                return ActionType::Attack;
-            if (canHeal)
-                return ActionType::UseItem;
-            return ActionType::Block;
-        }
-
-        case AIState::Desperate:
-            return hasFocus ? ActionType::Attack
-                            : ActionType::Block;
-        }
-        return ActionType::Attack;
-    }
-};
-
-// --------------------
-// Enemy
-// --------------------
-class Enemy : public Entity
-{
-protected:
-    int base_attack;
-    int strength;
-    EnemyAI ai;
-
-public:
-    Enemy(string name, int hp, int baseInitiative, int baseAtk, int str)
-        : Entity(name, hp, baseInitiative, Faction::Enemy),
-          base_attack(baseAtk),
-          strength(str) {}
-
-    int get_attack_power() const override
-    {
-        return base_attack + strength;
-    }
-
-    void info() const override
-    {
-        cout << get_name() << " HP: " << get_hp();
-
-        if (get_focus() > 0)
-            cout << " [Focus: " << get_focus() << "]";
-
-        cout << endl;
-    }
-
-    ActionType decideAction() override
-    {
-        ai.update(
-            get_hp(),
-            hasItems(),
-            has_focus());
-        return ai.decideAction();
     }
 };
 
@@ -555,12 +133,12 @@ private:
     vector<Entity *> entities;
     BattleLog log;
     vector<Entity *> turnOrder;
-    unordered_map<string, FighterStats> statsMap;
+    unordered_map<std::string, FighterStats> statsMap;
     int roundCounter = 0;
     bool interactive = false;
 
 public:
-    Battle(vector<Entity *> ents, bool interactiveMode)
+    Battle(std::vector<Entity *> ents, bool interactiveMode)
         : entities(ents), interactive(interactiveMode)
     {
     }
@@ -588,7 +166,7 @@ public:
             buildTurnOrder(entities, turnOrder);
             log.clear();
 
-            vector<PlannedAction> plannedActions =
+            std::vector<PlannedAction> plannedActions =
                 planTurn(turnOrder);
 
             for (PlannedAction &action : plannedActions)
@@ -599,7 +177,7 @@ public:
 
                 startTurn(*action.actor);
 
-                vector<Entity *> targets =
+                std::vector<Entity *> targets =
                     resolveTargets(action, entities);
 
                 for (Entity *target : targets)
@@ -657,8 +235,8 @@ public:
 
                 if (interactive)
                 {
-                    cout << "\n=== Battle Finished ===\n";
-                    cout << "Enemies win!\n";
+                    std::cout << "\n=== Battle Finished ===\n";
+                    std::cout << "Enemies win!\n";
                 }
 
                 break;
@@ -670,8 +248,8 @@ public:
 
                 if (interactive)
                 {
-                    cout << "\n=== Battle Finished ===\n";
-                    cout << "Player wins!\n";
+                    std::cout << "\n=== Battle Finished ===\n";
+                    std::cout << "Player wins!\n";
                 }
 
                 break;
@@ -679,9 +257,9 @@ public:
 
             if (interactive)
             {
-                cout << "\nPress Enter to continue...";
-                cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                cin.get();
+                std::cout << "\nPress Enter to continue...";
+                std::cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                std::cin.get();
             }
         }
         summary.rounds = roundCounter;
@@ -703,22 +281,22 @@ public:
 // SCREEN DRAW AFTER CALCULATION
 
 void renderBattleScreen(
-    const vector<Entity *> &entities,
+    const std::vector<Entity *> &entities,
     const BattleLog &log,
-    const vector<Entity *> &turnOrder)
+    const std::vector<Entity *> &turnOrder)
 {
     clearScreen();
 
-    cout << "====== BATTLE ======\n\n";
+    std::cout << "====== BATTLE ======\n\n";
 
     for (const Entity *e : entities)
     {
         e->info();
     }
 
-    cout << "\n--------------------\n";
+    std::cout << "\n--------------------\n";
 
-    cout << "\n--- Initiative order ---\n\n";
+    std::cout << "\n--- Initiative order ---\n\n";
 
     for (const Entity *ent : turnOrder)
     {
@@ -726,65 +304,65 @@ void renderBattleScreen(
         if (!ent->is_alive())
             continue;
 
-        cout << ent->get_name() << " (" << ent->getInitiative() << ")"
+        std::cout << ent->get_name() << " (" << ent->getInitiative() << ")"
              << "-----";
     }
 
-    cout << "\n";
+    std::cout << "\n";
 
-    cout << "\n--- Last turn ---\n";
+    std::cout << "\n--- Last turn ---\n";
 
     for (const ActionResult &r : log.actions)
     {
         if (r.cancelled)
         {
-            cout << r.actor << " tries to attack, but " << r.target
+            std::cout << r.actor << " tries to attack, but " << r.target
                  << " is already dead";
             continue;
         }
         if (r.type == ActionType::Attack)
         {
-            cout << r.actor << " hits " << r.target
+            std::cout << r.actor << " hits " << r.target
                  << " for " << r.damageApplied << ".";
 
             if (r.isCritical)
-                cout << " (CRITICAL)";
+                std::cout << " (CRITICAL)";
 
             if (r.usedFocus)
-                cout << " (FOCUSED)";
+                std::cout << " (FOCUSED)";
         }
 
         if (r.type == ActionType::Block)
         {
-            cout << r.actor << " prepares to block";
+            std::cout << r.actor << " prepares to block";
         }
 
         if (r.damageBlocked > 0)
         {
-            cout << " " << r.target << " blocks " << r.damageBlocked << " damage";
+            std::cout << " " << r.target << " blocks " << r.damageBlocked << " damage";
         }
 
         if (r.type == ActionType::UseItem && r.healedPlanned > 0)
         {
-            cout << r.actor << " uses " << r.itemName << " and heals for "
+            std::cout << r.actor << " uses " << r.itemName << " and heals for "
                  << r.healedPlanned << " HP";
         }
 
-        cout << endl;
+        std::cout << std::endl;
 
         if (r.targetDied)
         {
-            cout << r.target << " is defeated!" << endl;
+            std::cout << r.target << " is defeated!" << std::endl;
         }
     }
 
-    cout << "\n--------------------\n";
+    std::cout << "\n--------------------\n";
 }
 
 // Initiative calculator
 
-void buildTurnOrder(const vector<Entity *> &entities,
-                    vector<Entity *> &turnOrder)
+void buildTurnOrder(const std::vector<Entity *> &entities,
+                    std::vector<Entity *> &turnOrder)
 {
     turnOrder = entities;
 
@@ -823,11 +401,11 @@ void executeAction(const ResolvedAction &action,
     log.add(result);
 };
 
-vector<Entity *> resolveTargets(
+std::vector<Entity *> resolveTargets(
     const PlannedAction &action,
-    const vector<Entity *> &entities)
+    const std::vector<Entity *> &entities)
 {
-    vector<Entity *> result;
+    std::vector<Entity *> result;
 
     if (action.targetType == TargetType::Self)
     {
@@ -897,7 +475,7 @@ void applyActionResult(ActionResult &result,
     {
     case ActionType::Attack:
     {
-        int actualDamage = target.take_damage(result.damagePlanned);
+        int actualDamage = target.receive_damage(result.damagePlanned);
         result.damageApplied = actualDamage;
         result.damageBlocked = result.damagePlanned - actualDamage;
         result.targetDied = !target.is_alive();
@@ -931,10 +509,10 @@ TargetType targetTypeSelection(ActionType a)
 
 // Decision function
 
-vector<PlannedAction> planTurn(
-    const vector<Entity *> &turnOrder)
+std::vector<PlannedAction> planTurn(
+    const std::vector<Entity *> &turnOrder)
 {
-    vector<PlannedAction> plannedActions;
+    std::vector<PlannedAction> plannedActions;
 
     for (Entity *actor : turnOrder)
     {
@@ -976,30 +554,30 @@ int main()
     orc.addItem({"Crude Potion", ItemType::Heal, 10});
     orc.addItem({"Crude Potion", ItemType::Heal, 10});
 
-    vector<Entity *> battleEntities = {&hero, &kobold, &orc};
+    std::vector<Entity *> battleEntities = {&hero, &kobold, &orc};
 
     hero.setAutoMode(true);
 
     Battle battle(battleEntities, false);
     BattleSummary summary = battle.run();
 
-    cout << "\n=== Battle Summary ===\n";
+    std::cout << "\n=== Battle Summary ===\n";
 
-    cout << "Winner: ";
+    std::cout << "Winner: ";
     if (summary.result == BattleResult::PlayerWin)
-        cout << "Player\n";
+        std::cout << "Player\n";
     else
-        cout << "Enemies\n";
-    cout << "Rounds: " << summary.rounds << "\n";
+        std::cout << "Enemies\n";
+    std::cout << "Rounds: " << summary.rounds << "\n";
 
     for (const auto &f : summary.fighters)
     {
-        cout << f.name
+        std::cout << f.name
              << " | HP: " << f.remainingHP
              << " | Dealt: " << f.damageDealt
              << " | Blocked: " << f.damageBlocked
              << " | Healed: " << f.healingDone
-             << endl;
+             << std::endl;
     }
 
     return 0;
