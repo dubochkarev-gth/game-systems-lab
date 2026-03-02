@@ -576,9 +576,11 @@ void endTurn(Entity &e) {
 int main()
 {
     Player hero("Dark_Avanger", 100, 10, 5);
+    Player hero2("Shadow_Blader", 90, 12, 4);
 
-    Enemy kobold("Sneaky_Kody", 40, 15, 5, 3);
-    Enemy orc("Gazkul_Trakka", 80, 9, 7, 4);
+    Enemy kobold("Sneaky_Kody", 55, 15, 5, 3);
+    Enemy orc("Gazkul_Trakka", 90, 9, 7, 4);
+    Enemy kobold2("Ugly_Gobby", 55, 15, 5, 3);
 
     auto heroInv = std::make_unique<Inventory>();
     heroInv->add({"Small Potion", ItemType::Heal, 7});
@@ -590,9 +592,10 @@ int main()
     orcInv->add({"Crude Potion", ItemType::Heal, 10});
     orc.attachInventory(std::move(orcInv));
 
-    std::vector<Entity *> battleEntities = {&hero, &kobold, &orc};
+    std::vector<Entity *> battleEntities = {&hero, &hero2, &kobold, &orc, &kobold2};
 
     hero.setAutoMode(true);
+    hero2.setAutoMode(true);
 
     Battle battle(battleEntities, false);
     BattleSummary summary = battle.run();
