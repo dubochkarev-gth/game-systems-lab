@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <iostream>
 
-// Используем то, что объявлено в main.cpp
 extern int randomInt(int min, int max);
 
 // =======================
@@ -39,7 +38,7 @@ int Entity::receive_damage(int amount)
 {
     if (isBlocking)
     {
-        amount = static_cast<int>(amount * 0.5f);
+        amount = static_cast<int>(amount * BLOCK_BONUS_MULTIPLIER);
         isBlocking = false;
     }
 
