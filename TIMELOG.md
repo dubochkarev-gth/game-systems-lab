@@ -1,8 +1,9 @@
 Time Tracking
 
-Approximatly spend 26h 30m
+Approximatly spend 27h 30m
 
 Log:
+[META] Timelog adjustment requested by user ~ 1h
 [CORE] Action ? TargetType mapping abstraction #24 fix ~ 15 min
 [META] Timelog adjustment requested by user ~ 1h
 [CORE] Remove target from decideAction #23 fix ~ 1h
