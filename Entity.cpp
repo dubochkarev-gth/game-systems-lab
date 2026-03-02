@@ -2,6 +2,7 @@
 #include "Entity.h"
 #include <algorithm>
 #include <iostream>
+#include "Inventory.h"
 
 extern int randomInt(int min, int max);
 
@@ -80,22 +81,11 @@ int Entity::getInitiative() const
     return stats.baseInitiative;
 }
 
-bool Entity::hasItems() const
-{
-    return !inventory.empty();
-}
-
-void Entity::addItem(const Item &item)
-{
-    inventory.push_back(item);
-}
-
-
 // =======================
 // Combat logic
 // =======================
 
-ActionResult Entity::attack(Entity& target)
+ActionResult Entity::attack(Entity &target)
 {
     ActionResult result;
 
@@ -132,32 +122,17 @@ ActionResult Entity::block()
     return result;
 }
 
-ActionResult Entity::useItem()
-{
-    ActionResult result;
-    result.type = ActionType::UseItem;
-    result.actor = name;
-    result.target = name;
-
-    if (inventory.empty())
-        return result;
-
-    Item item = inventory.front();
-    inventory.erase(inventory.begin());
-
-    result.itemName = item.name;
-
-    if (item.type == ItemType::Heal)
-        result.healedPlanned = item.power;
-
-    return result;
-}
-
 ActionType Entity::decideAction()
 {
     return ActionType::Block;
 }
 
+// Item logic
+
+bool Entity::hasItems() const
+{
+    return inventory && !inventory->empty();
+}
 
 // =======================
 // Player
@@ -194,7 +169,7 @@ ActionType Player::decideAction()
 {
     if (autoMode)
     {
-        if (get_hp() < max_hp*50/100 && hasItems())
+        if (get_hp() < max_hp * 50 / 100 && hasItems())
             return ActionType::UseItem;
 
         if (has_focus())
@@ -265,21 +240,26 @@ ActionType EnemyAI::decideAction() const
 {
     switch (state)
     {
-        case AIState::Aggressive:
+    case AIState::Aggressive:
+        return ActionType::Attack;
+
+    case AIState::Defensive:
+    {
+        int roll = randomInt(0, 1);
+        if (roll == 0)
             return ActionType::Attack;
+        if (canHeal)
+            return ActionType::UseItem;
+        return ActionType::Block;
+    }
 
-        case AIState::Defensive:
-        {
-            int roll = randomInt(0, 1);
-            if (roll == 0)
-                return ActionType::Attack;
-            if (canHeal)
-                return ActionType::UseItem;
-            return ActionType::Block;
-        }
+    case AIState::Desperate:
+    {
+        if (canHeal)
+            return ActionType::UseItem;
 
-        case AIState::Desperate:
-            return hasFocus ? ActionType::Attack : ActionType::Block;
+        return hasFocus ? ActionType::Attack : ActionType::Block;
+    }
     }
 
     return ActionType::Attack;
@@ -290,8 +270,7 @@ ActionType Enemy::decideAction()
     ai.update(
         get_hp(),
         hasItems(),
-        has_focus()
-    );
+        has_focus());
 
     return ai.decideAction();
 }

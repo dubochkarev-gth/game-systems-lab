@@ -1,25 +1,17 @@
 // --- Entity.h ---
 #pragma once
 #include <string>
-#include <vector>
+#include <memory>
 #include "CombatTypes.h"
+#include "Item.h"
+
+// Forward declaration
+class Inventory;
 
 enum class Faction
 {
     Player,
     Enemy
-};
-
-enum class ItemType
-{
-    Heal
-};
-
-struct Item
-{
-    std::string name;
-    ItemType type;
-    int power;
 };
 
 struct Stats
@@ -36,8 +28,8 @@ protected:
     bool isBlocking = false;
     int focus = 0;
     Stats stats;
-    std::vector<Item> inventory;
     Faction faction;
+    std::unique_ptr<Inventory> inventory;
 
 public:
     Entity(std::string n, int h, int baseInitiative, Faction f);
@@ -59,15 +51,22 @@ public:
     virtual int get_attack_power() const;
     int getInitiative() const;
 
-    bool hasItems() const;
-    void addItem(const Item&);
     bool has_focus() const;
 
     virtual ActionType decideAction();
     virtual ActionResult attack(Entity& target);
     virtual ActionResult block();
-    virtual ActionResult useItem();
     virtual void info() const;
+
+    void attachInventory(std::unique_ptr<Inventory> inv){
+        inventory = std::move(inv);
+    }
+
+    Inventory* getInventory(){
+        return inventory.get();
+    }
+
+    bool hasItems() const;
 };
 
 class Player : public Entity

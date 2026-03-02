@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include "Entity.h"
 #include "CombatTypes.h"
+#include "Inventory.h"
+#include "ItemSystem.h"
 
 using namespace std;
 
@@ -387,7 +389,7 @@ void executeAction(const ResolvedAction &action,
         break;
 
     case ActionType::UseItem:
-        result = action.actor->useItem();
+        result = ItemSystem::useItem(*action.actor);
         break;
     }
 
@@ -451,9 +453,10 @@ bool validateAction(
     }
 
     // 4. Item availability
-    if (action.type == ActionType::UseItem && !action.actor->hasItems())
-    {
-        return false;
+    if (action.type == ActionType::UseItem){
+        Inventory* inv = action.actor->getInventory();
+            if (!inv || inv->empty())
+                return false;
     }
 
     // OK
@@ -541,11 +544,15 @@ int main()
     Enemy kobold("Sneaky_Kody", 40, 15, 5, 3);
     Enemy orc("Gazkul_Trakka", 80, 9, 7, 4);
 
-    hero.addItem({"Small Potion", ItemType::Heal, 7});
-    hero.addItem({"Small Potion", ItemType::Heal, 7});
+    auto heroInv = std::make_unique<Inventory>();
+    heroInv->add({"Small Potion", ItemType::Heal, 7});
+    heroInv->add({"Small Potion", ItemType::Heal, 7});
+    hero.attachInventory(std::move(heroInv));
 
-    orc.addItem({"Crude Potion", ItemType::Heal, 10});
-    orc.addItem({"Crude Potion", ItemType::Heal, 10});
+    auto orcInv = std::make_unique<Inventory>();
+    orcInv->add({"Crude Potion", ItemType::Heal, 10});
+    orcInv->add({"Crude Potion", ItemType::Heal, 10});
+    orc.attachInventory(std::move(orcInv));
 
     std::vector<Entity *> battleEntities = {&hero, &kobold, &orc};
 

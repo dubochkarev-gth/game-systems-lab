@@ -1,6 +1,6 @@
 Time Tracking
 
-Approximatly spend 27h 30m
+Approximatly spend 28h 30m
 
 Log:
 [META] Timelog adjustment requested by user ~ 1h
@@ -16,3 +16,4 @@ Explicit turn lifecycle (StartTurn / EndTurn) #21 ~ 20 min
 [Gameplay] Support multiple enemies in battle #4 implementation ~ 30 min
 [Core] Extract Battle into a dedicated class #28 ~ 30 min
 
+[META] Timelog adjustment requested by user ~ 1h
