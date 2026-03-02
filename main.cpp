@@ -89,38 +89,37 @@ struct BattleLog
     }
 };
 
-vector<Entity*> resolveTargets(
-    const PlannedAction& action,
-    const vector<Entity*>& entities);
+vector<Entity *> resolveTargets(
+    const PlannedAction &action,
+    const vector<Entity *> &entities);
 
 bool validateAction(
-    const PlannedAction& action,
-    Entity* target,
-    ActionResult& outResult);
+    const PlannedAction &action,
+    Entity *target,
+    ActionResult &outResult);
 
 void executeAction(
-    const ResolvedAction& action,
-    BattleLog& log);
+    const ResolvedAction &action,
+    BattleLog &log);
 
 void applyActionResult(
-    ActionResult& result,
-    Entity& target);
+    ActionResult &result,
+    Entity &target);
 
-void startTurn(Entity& e);
-void endTurn(Entity& e);
+void startTurn(Entity &e);
+void endTurn(Entity &e);
 
 void renderBattleScreen(
-    const vector<Entity*>& entities,
-    const BattleLog& log,
-    const vector<Entity*>& turnOrder);
+    const vector<Entity *> &entities,
+    const BattleLog &log,
+    const vector<Entity *> &turnOrder);
 
 void buildTurnOrder(
-    const vector<Entity*>& entities,
-    vector<Entity*>& turnOrder);
+    const vector<Entity *> &entities,
+    vector<Entity *> &turnOrder);
 
 vector<PlannedAction> planTurn(
-    const vector<Entity*>& turnOrder);
-
+    const vector<Entity *> &turnOrder);
 
 class Battle
 {
@@ -199,14 +198,41 @@ public:
                     {
                         ActionResult &last = log.actions.back();
                         applyActionResult(last, *target);
+
                         statsMap[last.actor].damageDealt += last.damageApplied;
                         statsMap[last.target].damageBlocked += last.damageBlocked;
                         statsMap[last.actor].healingDone += last.healedPlanned;
+
+                        // --- Threat generation ---
+                        if (last.damageApplied > 0)
+                        {
+                            float normalized =
+                                static_cast<float>(last.damageApplied) /
+                                static_cast<float>(target->get_max_hp());
+
+                            action.actor->add_threat(normalized);
+                        }
+
+                        if (last.healedPlanned > 0)
+                        {
+                            float normalized =
+                                static_cast<float>(last.healedPlanned) /
+                                static_cast<float>(target->get_max_hp());
+
+                            action.actor->add_threat(normalized * 0.5f);
+                        }
                     }
                 }
 
                 endTurn(*action.actor);
             }
+
+            // Threat decay after full round
+            for (Entity *e : entities)
+            {
+                e->decay_threat(0.8f);
+            }
+
             if (interactive)
                 renderBattleScreen(entities, log, turnOrder);
 
@@ -300,7 +326,7 @@ void renderBattleScreen(
             continue;
 
         std::cout << ent->get_name() << " (" << ent->getInitiative() << ")"
-             << "-----";
+                  << "-----";
     }
 
     std::cout << "\n";
@@ -312,13 +338,13 @@ void renderBattleScreen(
         if (r.cancelled)
         {
             std::cout << r.actor << " tries to attack, but " << r.target
-                 << " is already dead";
+                      << " is already dead";
             continue;
         }
         if (r.type == ActionType::Attack)
         {
             std::cout << r.actor << " hits " << r.target
-                 << " for " << r.damageApplied << ".";
+                      << " for " << r.damageApplied << ".";
 
             if (r.isCritical)
                 std::cout << " (CRITICAL)";
@@ -340,7 +366,7 @@ void renderBattleScreen(
         if (r.type == ActionType::UseItem && r.healedPlanned > 0)
         {
             std::cout << r.actor << " uses " << r.itemName << " and heals for "
-                 << r.healedPlanned << " HP";
+                      << r.healedPlanned << " HP";
         }
 
         std::cout << std::endl;
@@ -409,16 +435,25 @@ std::vector<Entity *> resolveTargets(
 
     if (action.targetType == TargetType::FirstAliveEnemy)
     {
+        Entity *best = nullptr;
+        float maxThreat = -1.0f;
+
         for (Entity *e : entities)
         {
             if (e != action.actor &&
                 e->is_alive() &&
                 e->getFaction() != action.actor->getFaction())
             {
-                result.push_back(e);
-                break;
+                if (e->get_threat() > maxThreat)
+                {
+                    maxThreat = e->get_threat();
+                    best = e;
+                }
             }
         }
+
+        if (best)
+            result.push_back(best);
     }
 
     return result;
@@ -453,10 +488,11 @@ bool validateAction(
     }
 
     // 4. Item availability
-    if (action.type == ActionType::UseItem){
-        Inventory* inv = action.actor->getInventory();
-            if (!inv || inv->empty())
-                return false;
+    if (action.type == ActionType::UseItem)
+    {
+        Inventory *inv = action.actor->getInventory();
+        if (!inv || inv->empty())
+            return false;
     }
 
     // OK
@@ -573,11 +609,11 @@ int main()
     for (const auto &f : summary.fighters)
     {
         std::cout << f.name
-             << " | HP: " << f.remainingHP
-             << " | Dealt: " << f.damageDealt
-             << " | Blocked: " << f.damageBlocked
-             << " | Healed: " << f.healingDone
-             << std::endl;
+                  << " | HP: " << f.remainingHP
+                  << " | Dealt: " << f.damageDealt
+                  << " | Blocked: " << f.damageBlocked
+                  << " | Healed: " << f.healingDone
+                  << std::endl;
     }
 
     return 0;

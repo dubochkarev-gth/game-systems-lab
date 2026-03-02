@@ -22,6 +22,7 @@ void Entity::info() const
               << " | HP: " << hp
               << " | Focus: " << focus
               << " | Initiative: " << stats.baseInitiative
+              << " | Threat: " << threat
               << std::endl;
 }
 
@@ -126,6 +127,26 @@ ActionResult Entity::block()
 ActionType Entity::decideAction()
 {
     return ActionType::Block;
+}
+
+void Entity::add_threat(float amount)
+{
+    threat += amount;
+}
+
+float Entity::get_threat() const
+{
+    return threat;
+}
+
+void Entity::decay_threat(float factor)
+{
+    threat *= factor;
+}
+
+void Entity::reset_threat()
+{
+    threat = 0.0f;
 }
 
 // Item logic

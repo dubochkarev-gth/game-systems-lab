@@ -30,6 +30,7 @@ protected:
     Stats stats;
     Faction faction;
     std::unique_ptr<Inventory> inventory;
+    float threat = 0.0f;
 
 public:
     Entity(std::string n, int h, int baseInitiative, Faction f);
@@ -48,6 +49,11 @@ public:
     void set_blocking(bool);
     void add_focus(int);
     void consume_focus();
+
+    void add_threat(float amount);
+    float get_threat() const;
+    void decay_threat(float factor);
+    void reset_threat();
 
     virtual int get_attack_power() const;
     int getInitiative() const;
