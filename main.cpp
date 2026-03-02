@@ -10,14 +10,6 @@
 
 using namespace std;
 
-// CONSTANTS
-
-constexpr float FOCUS_BONUS_MULTIPLIER = 1.5f;
-constexpr int CRIT_CHANCE_PERCENT = 20;
-constexpr float CRIT_MULTIPLIER = 2.0f;
-constexpr float BLOCK_BONUS_MULTIPLIER = 0.5f;
-
-
 int randomInt(int min, int max)
 {
     static mt19937 gen(random_device{}());

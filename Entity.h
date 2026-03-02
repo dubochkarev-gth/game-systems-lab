@@ -3,10 +3,6 @@
 #include <vector>
 #include "CombatTypes.h"
 
-// Forward declarations
-enum class ActionType;
-struct ActionResult;
-
 enum class Faction
 {
     Player,

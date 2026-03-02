@@ -5,12 +5,6 @@
 // Используем то, что объявлено в main.cpp
 extern int randomInt(int min, int max);
 
-constexpr float FOCUS_BONUS_MULTIPLIER = 1.5f;
-constexpr int CRIT_CHANCE_PERCENT = 20;
-constexpr float CRIT_MULTIPLIER = 2.0f;
-constexpr float BLOCK_BONUS_MULTIPLIER = 0.5f;
-
-
 // =======================
 // Entity
 // =======================
@@ -43,8 +37,6 @@ void Entity::heal(int amount)
 
 int Entity::receive_damage(int amount)
 {
-    int original = amount;
-
     if (isBlocking)
     {
         amount = static_cast<int>(amount * 0.5f);
