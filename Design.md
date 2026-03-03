@@ -1,6 +1,6 @@
 # Turn-Based Tactical Roguelike
 
-Configuration-Driven, Class-Coordinated Design Document (v5)
+Configuration-Driven, Class-Coordinated Design Document (v6)
 
 ---
 
@@ -22,6 +22,8 @@ Combat exists to expose weaknesses in role synergy.
 
 The project is defined by four pillars:
 
+---
+
 ### 1. Role Coordination Over Solo Power
 
 The player controls two distinct classes:
@@ -37,8 +39,8 @@ Victory depends on synergy, not individual strength.
 
 Each class has its own resource:
 
-* Tank -> Guard
-* DPS -> Momentum
+* Tank → Guard
+* DPS → Momentum
 
 Resources are:
 
@@ -188,28 +190,110 @@ This creates tension:
 
 ---
 
-# Equipment Philosophy (Unchanged Core Idea)
+# Skill Structure & Role Expression
+
+Each class expresses identity through a constrained ability structure.
+
+Maximum per class:
+
+* 1 Passive
+* 2 Active abilities
+* 1 Ultimate
+
+Skills are granted through equipment configuration.
+
+There is no shared ability pool.
+There is no cross-class skill mixing.
+There is no vertical scaling of skill count.
+
+Abilities reinforce identity and trade-offs.
+
+---
+
+## Role Expression Model
+
+### Tank
+
+Role identity: Stabilization & Threat Control
+
+Abilities must:
+
+* interact with Guard
+* interact with Threat
+* reinforce defensive timing
+* stabilize volatile situations
+
+Tank abilities do not create burst dominance.
+Tank controls tempo, not damage spikes.
+
+---
+
+### DPS
+
+Role identity: Pressure & Volatility
+
+Abilities must:
+
+* interact with Momentum
+* create burst windows
+* increase risk-reward tension
+* amplify timing importance
+
+DPS abilities do not stabilize combat.
+They increase pressure.
+
+---
+
+# Ability Categories
+
+## Passive
+
+* Always active
+* Modifies resource behavior, mitigation, or threat dynamics
+* Shapes identity but does not create new actions
+
+Passives define playstyle bias.
+
+---
+
+## Active
+
+* Player-triggered
+* Costs resource (Guard or Momentum)
+* Creates tactical decision point
+* Must have opportunity cost
+
+Actives are timing tools.
+
+---
+
+## Ultimate
+
+* High resource cost
+* High tactical impact
+* Limited frequency
+* Designed to resolve unstable states
+
+Ultimate amplifies identity but does not replace it.
+
+---
+
+# Equipment Philosophy
 
 Equipment changes behavior, not just numbers.
 
-## Tank Weapon Examples
+Equipment grants:
 
-* Iron Hook: Taunt also deals damage
-* Bulwark Hammer: Block generates double Guard
-* Anchor Blade: Taunt costs Guard but massively increases threat
+* Passive
+* Active slots
+* Ultimate
 
-## DPS Weapon Examples
+Equipment defines a behavior package.
 
-* Burst Blade: Consumes all Momentum for damage spike
-* Sustained Blade: Consumes 1 Momentum per hit
-* Risk Blade: Higher crit scaling, lower base damage
+Stronger equipment does not increase stat inflation.
+It increases behavioral complexity.
 
-Armor modifies:
-
-* mitigation
-* resource generation
-* initiative
-* threat modifiers
+Trade-offs remain mandatory.
 
 No rarity tiers.
 No loot inflation.
@@ -238,15 +322,13 @@ Combat tests:
 
 Choices are mutually exclusive.
 
-Examples:
-
-Tank:
+Tank examples:
 
 * +Guard generation, -damage
 * Stronger Taunt, slower initiative
 * Higher mitigation, lower max HP
 
-DPS:
+DPS examples:
 
 * Higher crit scaling, lower base damage
 * Faster initiative, weaker sustain
@@ -260,7 +342,7 @@ Every choice narrows identity.
 
 # Dungeon Structure (MVP)
 
-* 5-10 rooms
+* 5–10 rooms
 * First room safe
 * Final room boss
 * No spatial map required
@@ -301,6 +383,7 @@ Included:
 * Guard system
 * Momentum system
 * Threat system
+* Basic ability structure (1 Passive, Actives, Ultimate framework)
 * Hub configuration
 * Dungeon sequence
 * Text interface
@@ -334,4 +417,3 @@ If they think:
 
 The design has failed.
 
----
