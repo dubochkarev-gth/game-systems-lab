@@ -1,6 +1,6 @@
 Time Tracking
 
-Approximatly spend 28h 30m
+Approximatly spend 31h 30m
 
 Log:
 [META] Timelog adjustment requested by user ~ 1h
