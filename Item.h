@@ -4,12 +4,18 @@
 
 enum class ItemType
 {
-    Heal
+    Heal,
+    Equipment
 };
 
 struct Item
 {
     std::string name;
     ItemType type;
-    int power;
+
+    int power = 0;
+
+    float damageMultiplier = 1.0f;
+    float threatMultiplier = 1.0f;
+    float blockMultiplierFromEquip = 1.0f;
 };

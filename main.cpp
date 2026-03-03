@@ -540,12 +540,12 @@ TargetType targetTypeSelection(ActionType a)
 // Decision function
 
 std::vector<PlannedAction> planTurn(
-    const std::vector<Entity*>& turnOrder,
+    const std::vector<Entity *> &turnOrder,
     bool interactive)
 {
     std::vector<PlannedAction> plannedActions;
 
-    for (Entity* actor : turnOrder)
+    for (Entity *actor : turnOrder)
     {
         if (!actor->is_alive())
             continue;
@@ -558,7 +558,8 @@ std::vector<PlannedAction> planTurn(
         {
             int choice = 0;
 
-            std::cout << "\n" << actor->get_name()
+            std::cout << "\n"
+                      << actor->get_name()
                       << " choose action:\n";
             std::cout << "1 - Attack\n";
             std::cout << "2 - Block\n";
@@ -619,6 +620,22 @@ int main()
     orc.attachInventory(std::move(orcInv));
 
     std::vector<Entity *> battleEntities = {&hero, &hero2, &kobold, &orc, &kobold2};
+
+    Item tankCore;
+    tankCore.name = "Bulwark Armor";
+    tankCore.type = ItemType::Equipment;
+    tankCore.damageMultiplier = 0.85f;
+    tankCore.threatMultiplier = 1.6f;
+    tankCore.blockMultiplierFromEquip = 0.6f;
+
+    Item dpsCore;
+    dpsCore.name = "Executioner Blade";
+    dpsCore.type = ItemType::Equipment;
+    dpsCore.damageMultiplier = 1.4f;
+    dpsCore.threatMultiplier = 0.7f;
+
+    hero.equip(tankCore);
+    hero2.equip(dpsCore);
 
     hero.setAutoMode(true);
     hero2.setAutoMode(true);

@@ -49,7 +49,8 @@ int Entity::receive_damage(int amount)
 {
     if (isBlocking)
     {
-        amount = static_cast<int>(amount * BLOCK_BONUS_MULTIPLIER);
+        amount = static_cast<int>(
+            amount * BLOCK_BONUS_MULTIPLIER * blockMultiplierFromEquip);
         isBlocking = false;
     }
 
@@ -118,6 +119,7 @@ ActionResult Entity::attack(Entity &target)
         result.usedFocus = true;
     }
 
+    dmg = static_cast<int>(dmg * damageMultiplier);
     result.damagePlanned = dmg;
     return result;
 }
@@ -138,7 +140,7 @@ ActionType Entity::decideAction()
 
 void Entity::add_threat(float amount)
 {
-    threat += amount;
+    threat += amount * threatMultiplier;
 }
 
 float Entity::get_threat() const
@@ -161,6 +163,18 @@ void Entity::reset_threat()
 bool Entity::hasItems() const
 {
     return inventory && !inventory->empty();
+}
+
+void Entity::equip(const Item &item)
+{
+    if (item.type != ItemType::Equipment)
+        return;
+
+    damageMultiplier *= item.damageMultiplier;
+    threatMultiplier *= item.threatMultiplier;
+    blockMultiplierFromEquip *= item.blockMultiplierFromEquip;
+
+    std::cout << name << " equipped " << item.name << std::endl;
 }
 
 // =======================

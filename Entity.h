@@ -31,6 +31,9 @@ protected:
     Faction faction;
     std::unique_ptr<Inventory> inventory;
     float threat = 0.0f;
+    float damageMultiplier = 1.0f;
+    float threatMultiplier = 1.0f;
+    float blockMultiplierFromEquip = 1.0f;
 
 public:
     Entity(std::string n, int h, int baseInitiative, Faction f);
@@ -74,6 +77,7 @@ public:
     }
 
     bool hasItems() const;
+    void equip(const Item& item);
 };
 
 class Player : public Entity
