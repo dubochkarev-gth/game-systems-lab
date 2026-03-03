@@ -119,7 +119,7 @@ void buildTurnOrder(
     vector<Entity *> &turnOrder);
 
 vector<PlannedAction> planTurn(
-    const vector<Entity *> &turnOrder);
+    const vector<Entity *> &turnOrder, bool interactive);
 
 class Battle
 {
@@ -161,7 +161,7 @@ public:
             log.clear();
 
             std::vector<PlannedAction> plannedActions =
-                planTurn(turnOrder);
+                planTurn(turnOrder, interactive);
 
             for (PlannedAction &action : plannedActions)
             {
@@ -315,9 +315,7 @@ void renderBattleScreen(
         e->info();
     }
 
-    std::cout << "\n--------------------\n";
-
-    std::cout << "\n--- Initiative order ---\n\n";
+    std::cout << "\n--- Initiative order ---\n";
 
     for (const Entity *ent : turnOrder)
     {
@@ -542,25 +540,53 @@ TargetType targetTypeSelection(ActionType a)
 // Decision function
 
 std::vector<PlannedAction> planTurn(
-    const std::vector<Entity *> &turnOrder)
+    const std::vector<Entity*>& turnOrder,
+    bool interactive)
 {
     std::vector<PlannedAction> plannedActions;
 
-    for (Entity *actor : turnOrder)
+    for (Entity* actor : turnOrder)
     {
-
         if (!actor->is_alive())
             continue;
 
         PlannedAction action;
         action.actor = actor;
-        action.type = actor->decideAction();
+
+        if (interactive &&
+            actor->getFaction() == Faction::Player)
+        {
+            int choice = 0;
+
+            std::cout << "\n" << actor->get_name()
+                      << " choose action:\n";
+            std::cout << "1 - Attack\n";
+            std::cout << "2 - Block\n";
+            std::cout << "3 - Use Item\n";
+
+            while (choice < 1 || choice > 3)
+            {
+                std::cin >> choice;
+            }
+
+            if (choice == 1)
+                action.type = ActionType::Attack;
+            else if (choice == 2)
+                action.type = ActionType::Block;
+            else
+                action.type = ActionType::UseItem;
+        }
+        else
+        {
+            action.type = actor->decideAction();
+        }
+
         action.targetType = targetTypeSelection(action.type);
         plannedActions.push_back(action);
     }
 
     return plannedActions;
-};
+}
 
 void startTurn(Entity &e) {
     // future: status tick, regen, focus decay
@@ -597,7 +623,7 @@ int main()
     hero.setAutoMode(true);
     hero2.setAutoMode(true);
 
-    Battle battle(battleEntities, false);
+    Battle battle(battleEntities, true);
     BattleSummary summary = battle.run();
 
     std::cout << "\n=== Battle Summary ===\n";

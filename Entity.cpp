@@ -2,6 +2,7 @@
 #include "Entity.h"
 #include <algorithm>
 #include <iostream>
+#include <iomanip>
 #include "Inventory.h"
 
 extern int randomInt(int min, int max);
@@ -19,10 +20,16 @@ Entity::Entity(std::string n, int h, int baseInitiative, Faction f)
 void Entity::info() const
 {
     std::cout << name
-              << " | HP: " << hp
-              << " | Focus: " << focus
-              << " | Initiative: " << stats.baseInitiative
-              << " | Threat: " << threat
+              << " | HP: " << hp;
+
+    if (focus > 0)
+        std::cout << " | Focus: " << focus;
+
+    std::cout << " | Init: " << stats.baseInitiative
+              << " | Threat: "
+              << std::fixed << std::setprecision(2)
+              << threat
+              << std::defaultfloat
               << std::endl;
 }
 
@@ -178,13 +185,18 @@ void Player::setAutoMode(bool value)
 
 void Player::info() const
 {
-    std::cout << get_name()
-              << " HP: " << get_hp();
+    std::cout << name
+              << " | HP: " << hp;
 
-    if (get_focus() > 0)
-        std::cout << " [Focus: " << get_focus() << "]";
+    if (focus > 0)
+        std::cout << " | Focus: " << focus;
 
-    std::cout << std::endl;
+    std::cout << " | Init: " << stats.baseInitiative
+              << " | Threat: "
+              << std::fixed << std::setprecision(2)
+              << threat
+              << std::defaultfloat
+              << std::endl;
 }
 
 ActionType Player::decideAction()
