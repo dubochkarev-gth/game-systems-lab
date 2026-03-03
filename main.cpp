@@ -626,7 +626,7 @@ int main()
     tankCore.type = ItemType::Equipment;
     tankCore.damageMultiplier = 0.85f;
     tankCore.threatMultiplier = 1.6f;
-    tankCore.blockMultiplierFromEquip = 0.6f;
+    tankCore.blockMultiplierFromEquip = 0.8f;
 
     Item dpsCore;
     dpsCore.name = "Executioner Blade";
@@ -640,7 +640,7 @@ int main()
     hero.setAutoMode(true);
     hero2.setAutoMode(true);
 
-    Battle battle(battleEntities, true);
+    Battle battle(battleEntities, false);
     BattleSummary summary = battle.run();
 
     std::cout << "\n=== Battle Summary ===\n";
