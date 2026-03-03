@@ -6,6 +6,7 @@
 #include <vector>
 #include <limits>
 #include <unordered_map>
+#include <iomanip>
 #include "Entity.h"
 #include "CombatTypes.h"
 #include "Inventory.h"
@@ -312,7 +313,35 @@ void renderBattleScreen(
 
     for (const Entity *e : entities)
     {
-        e->info();
+        char marker = 'E';
+        if (e->getFaction() == Faction::Player)
+            marker = (e->has_taunt() ? 'T' : 'D');
+
+        std::cout << "[" << marker << "] ";
+
+        std::cout << std::left << std::setw(15)
+                  << e->get_name();
+
+        std::cout << " HP:"
+                  << e->get_hp() << "/"
+                  << e->get_max_hp();
+
+        if (e->has_taunt())
+        {
+            std::cout << " G:" << e->get_guard();
+        }
+        else
+        {
+            if (e->get_focus() > 0)
+                std::cout << " F:" << e->get_focus();
+        }
+
+        std::cout << " Th:"
+                  << std::fixed << std::setprecision(2)
+                  << e->get_threat()
+                  << std::defaultfloat;
+
+        std::cout << "\n";
     }
 
     std::cout << "\n--- Initiative order ---\n";
@@ -366,6 +395,10 @@ void renderBattleScreen(
             std::cout << r.actor << " uses " << r.itemName << " and heals for "
                       << r.healedPlanned << " HP";
         }
+        if (r.type == ActionType::Taunt)
+        {
+            std::cout << r.actor << " uses Taunt and increases threat.";
+        }
 
         std::cout << std::endl;
 
@@ -414,6 +447,9 @@ void executeAction(const ResolvedAction &action,
 
     case ActionType::UseItem:
         result = ItemSystem::useItem(*action.actor);
+        break;
+    case ActionType::Taunt:
+        result = action.actor->taunt();
         break;
     }
 
@@ -516,6 +552,7 @@ void applyActionResult(ActionResult &result,
     {
         target.set_blocking(true);
         target.add_focus(1);
+        target.add_guard(1);
         break;
     }
 
@@ -564,8 +601,10 @@ std::vector<PlannedAction> planTurn(
             std::cout << "1 - Attack\n";
             std::cout << "2 - Block\n";
             std::cout << "3 - Use Item\n";
+            if (actor->has_taunt())
+                std::cout << "4 - Taunt\n";
 
-            while (choice < 1 || choice > 3)
+            while (choice < 1 || choice > 4)
             {
                 std::cin >> choice;
             }
@@ -574,6 +613,8 @@ std::vector<PlannedAction> planTurn(
                 action.type = ActionType::Attack;
             else if (choice == 2)
                 action.type = ActionType::Block;
+            else if (choice == 4 && actor->has_taunt())
+                action.type = ActionType::Taunt;
             else
                 action.type = ActionType::UseItem;
         }
@@ -605,9 +646,9 @@ int main()
     Player hero("Dark_Avanger", 100, 10, 5);
     Player hero2("Shadow_Blader", 90, 12, 4);
 
-    Enemy kobold("Sneaky_Kody", 55, 15, 5, 3);
+    Enemy striker("Rage_Striker", 55, 14, 9, 4);
     Enemy orc("Gazkul_Trakka", 90, 9, 7, 4);
-    Enemy kobold2("Ugly_Gobby", 55, 15, 5, 3);
+    Enemy kobold("Ugly_Gobby", 55, 15, 5, 3);
 
     auto heroInv = std::make_unique<Inventory>();
     heroInv->add({"Small Potion", ItemType::Heal, 7});
@@ -619,7 +660,7 @@ int main()
     orcInv->add({"Crude Potion", ItemType::Heal, 10});
     orc.attachInventory(std::move(orcInv));
 
-    std::vector<Entity *> battleEntities = {&hero, &hero2, &kobold, &orc, &kobold2};
+    std::vector<Entity *> battleEntities = {&hero, &hero2, &striker, &orc, &kobold};
 
     Item tankCore;
     tankCore.name = "Bulwark Armor";
@@ -640,7 +681,7 @@ int main()
     hero.setAutoMode(true);
     hero2.setAutoMode(true);
 
-    Battle battle(battleEntities, false);
+    Battle battle(battleEntities, true);
     BattleSummary summary = battle.run();
 
     std::cout << "\n=== Battle Summary ===\n";

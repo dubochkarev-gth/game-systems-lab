@@ -91,6 +91,46 @@ int Entity::getInitiative() const
     return stats.baseInitiative;
 }
 
+int Entity::get_guard() const
+{
+    return guard;
+}
+
+void Entity::add_guard(int amount)
+{
+    guard += amount;
+}
+
+bool Entity::spend_guard(int amount)
+{
+    if (guard < amount)
+        return false;
+
+    guard -= amount;
+    return true;
+}
+
+ActionResult Entity::taunt()
+{
+    ActionResult result;
+    result.type = ActionType::Taunt;
+    result.actor = name;
+    result.target = name;
+
+    const int cost = 3;
+
+    if (!spend_guard(cost))
+    {
+        result.cancelled = true;
+        return result;
+    }
+
+    const float flatThreat = 0.3f;
+    add_threat(flatThreat);
+
+    return result;
+}
+
 // =======================
 // Combat logic
 // =======================
@@ -173,8 +213,17 @@ void Entity::equip(const Item &item)
     damageMultiplier *= item.damageMultiplier;
     threatMultiplier *= item.threatMultiplier;
     blockMultiplierFromEquip *= item.blockMultiplierFromEquip;
+    if (item.name == "Bulwark Armor")
+        {
+            hasTauntSkill = true;
+        }
 
     std::cout << name << " equipped " << item.name << std::endl;
+}
+
+bool Entity::has_taunt() const
+{
+    return hasTauntSkill;
 }
 
 // =======================

@@ -34,6 +34,8 @@ protected:
     float damageMultiplier = 1.0f;
     float threatMultiplier = 1.0f;
     float blockMultiplierFromEquip = 1.0f;
+    int guard = 0;
+    bool hasTauntSkill = false;
 
 public:
     Entity(std::string n, int h, int baseInitiative, Faction f);
@@ -67,6 +69,7 @@ public:
     virtual ActionResult attack(Entity& target);
     virtual ActionResult block();
     virtual void info() const;
+    virtual ActionResult taunt();
 
     void attachInventory(std::unique_ptr<Inventory> inv){
         inventory = std::move(inv);
@@ -78,6 +81,11 @@ public:
 
     bool hasItems() const;
     void equip(const Item& item);
+
+    int get_guard() const;
+    void add_guard(int amount);
+    bool spend_guard(int amount);
+    bool has_taunt() const;
 };
 
 class Player : public Entity

@@ -13,7 +13,8 @@ enum class ActionType
 {
     Attack,
     UseItem,
-    Block
+    Block,
+    Taunt
 };
 
 struct ActionResult
