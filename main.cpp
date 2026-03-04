@@ -12,6 +12,7 @@
 #include "Inventory.h"
 #include "ItemSystem.h"
 #include "SkillSystem.h"
+#include "Simulation.h"
 
 using namespace std;
 
@@ -35,9 +36,14 @@ void clearScreen()
 struct FighterStats
 {
     std::string name;
+
     int damageDealt = 0;
     int damageBlocked = 0;
     int healingDone = 0;
+
+    int hits = 0;
+    int maxHit = 0;
+
     int remainingHP = 0;
 };
 
@@ -205,6 +211,13 @@ public:
                         statsMap[last.actor].damageDealt += last.damageApplied;
                         statsMap[last.target].damageBlocked += last.damageBlocked;
                         statsMap[last.actor].healingDone += last.healedPlanned;
+                        if (last.damageApplied > 0)
+                        {
+                            FighterStats &fs = statsMap[last.actor];
+
+                            fs.hits++;
+                            fs.maxHit = std::max(fs.maxHit, last.damageApplied);
+                        }
 
                         // --- Threat generation ---
                         if (last.damageApplied > 0)
@@ -650,7 +663,8 @@ std::vector<PlannedAction> planTurn(
                       << " choose action:\n";
             std::cout << "1 - Attack\n";
             std::cout << "2 - Block\n";
-            std::cout << "3 - Use Item\n";
+            if (actor->hasItems())
+                std::cout << "3 - Use Item\n";
             if (actor->get_guard() >= 3)
                 std::cout << "4 - Taunt\n";
             if (actor->get_momentum() >= 2)
@@ -691,6 +705,100 @@ void startTurn(Entity &e) {
 void endTurn(Entity &e) {
     // future: cleanup, state transitions
 };
+
+void runSimulation(int runs)
+{
+    SimulationStats stats;
+
+    for (int i = 0; i < runs; i++)
+    {
+        Player hero("Dark_Avanger", 100, 10, 5);
+        Player hero2("Shadow_Blader", 90, 12, 4);
+
+        Enemy striker("Rage_Striker", 55, 14, 9, 4);
+        Enemy orc("Gazkul_Trakka", 90, 9, 7, 4);
+        Enemy kobold("Ugly_Gobby", 55, 15, 5, 3);
+
+        auto heroInv = std::make_unique<Inventory>();
+        heroInv->add({"Small Potion", ItemType::Heal, 7});
+        heroInv->add({"Small Potion", ItemType::Heal, 7});
+        hero.attachInventory(std::move(heroInv));
+
+        auto orcInv = std::make_unique<Inventory>();
+        orcInv->add({"Crude Potion", ItemType::Heal, 10});
+        orcInv->add({"Crude Potion", ItemType::Heal, 10});
+        orc.attachInventory(std::move(orcInv));
+
+        Item tankCore;
+        tankCore.name = "Bulwark Armor";
+        tankCore.type = ItemType::Equipment;
+        tankCore.damageMultiplier = 0.85f;
+        tankCore.threatMultiplier = 1.6f;
+        tankCore.blockMultiplierFromEquip = 0.8f;
+
+        Item dpsCore;
+        dpsCore.name = "Executioner Blade";
+        dpsCore.type = ItemType::Equipment;
+        dpsCore.damageMultiplier = 1.4f;
+        dpsCore.threatMultiplier = 0.7f;
+
+        hero.equip(tankCore);
+        hero2.equip(dpsCore);
+
+        hero.setAutoMode(true);
+        hero2.setAutoMode(true);
+
+        std::vector<Entity *> entities =
+            {
+                &hero, &hero2, &striker, &orc, &kobold};
+
+        Battle battle(entities, false);
+        BattleSummary summary = battle.run();
+
+        stats.runs++;
+        stats.totalRounds += summary.rounds;
+
+        if (summary.result == BattleResult::PlayerWin)
+            stats.playerWins++;
+        else
+            stats.enemyWins++;
+
+        for (const auto &f : summary.fighters)
+        {
+            stats.totalDamage[f.name] += f.damageDealt;
+            stats.totalMaxHit[f.name] =
+                std::max(stats.totalMaxHit[f.name], f.maxHit);
+        }
+    }
+
+    std::cout << "\n===== SIMULATION RESULT =====\n";
+
+    std::cout << "Runs: " << stats.runs << "\n";
+
+    std::cout << "Player win rate: "
+              << (100.0 * stats.playerWins / stats.runs)
+              << "%\n";
+
+    std::cout << "Enemy win rate: "
+              << (100.0 * stats.enemyWins / stats.runs)
+              << "%\n";
+
+    std::cout << "Average rounds: "
+              << ((double)stats.totalRounds / stats.runs)
+              << "\n\n";
+
+    std::cout << "--- Average Damage ---\n";
+
+    for (auto &pair : stats.totalDamage)
+    {
+        std::cout << pair.first
+                  << " avg damage: "
+                  << pair.second / stats.runs
+                  << " max hit observed: "
+                  << stats.totalMaxHit[pair.first]
+                  << "\n";
+    }
+}
 
 // --------------------
 // Main
@@ -735,8 +843,20 @@ int main()
     hero.setAutoMode(true);
     hero2.setAutoMode(true);
 
-    Battle battle(battleEntities, true);
-    BattleSummary summary = battle.run();
+    BattleSummary summary;
+
+    bool simflag = false;
+
+    if (!simflag)
+    {
+        Battle battle(battleEntities, true);
+        summary = battle.run();
+    }
+    else
+    {
+        runSimulation(10000);
+        return 0;
+    }
 
     std::cout << "\n=== Battle Summary ===\n";
 
@@ -749,9 +869,16 @@ int main()
 
     for (const auto &f : summary.fighters)
     {
+        int avgHit = 0;
+
+        if (f.hits > 0)
+            avgHit = f.damageDealt / f.hits;
+
         std::cout << f.name
                   << " | HP: " << f.remainingHP
                   << " | Dealt: " << f.damageDealt
+                  << " | MaxHit: " << f.maxHit
+                  << " | AvgHit: " << avgHit
                   << " | Blocked: " << f.damageBlocked
                   << " | Healed: " << f.healingDone
                   << std::endl;

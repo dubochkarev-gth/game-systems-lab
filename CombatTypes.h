@@ -7,7 +7,7 @@
 constexpr float FOCUS_BONUS_MULTIPLIER = 1.5f;
 constexpr int CRIT_CHANCE_PERCENT = 20;
 constexpr float CRIT_MULTIPLIER = 2.0f;
-constexpr float BLOCK_BONUS_MULTIPLIER = 0.5f;
+constexpr float BLOCK_BONUS_MULTIPLIER = 0.65f;
 
 enum class ActionType
 {

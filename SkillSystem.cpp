@@ -22,7 +22,7 @@ ActionResult SkillSystem::burst(Entity& actor, Entity& target)
 
     int dmg = randomInt(1, actor.get_attack_power());
 
-    dmg = static_cast<int>(dmg * 2.0f);
+    dmg = static_cast<int>(dmg * 3.0f);
 
     result.damagePlanned = dmg;
 
