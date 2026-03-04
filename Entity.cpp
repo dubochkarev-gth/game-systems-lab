@@ -93,20 +93,20 @@ int Entity::getInitiative() const
 
 int Entity::get_guard() const
 {
-    return guard;
+    return resources.guard;
 }
 
 void Entity::add_guard(int amount)
 {
-    guard += amount;
+    resources.guard += amount;
 }
 
 bool Entity::spend_guard(int amount)
 {
-    if (guard < amount)
+    if (resources.guard < amount)
         return false;
 
-    guard -= amount;
+    resources.guard -= amount;
     return true;
 }
 
@@ -129,6 +129,33 @@ ActionResult Entity::taunt()
     add_threat(flatThreat);
 
     return result;
+}
+
+int Entity::get_momentum() const
+{
+    return resources.momentum;
+}
+
+void Entity::add_momentum(int amount)
+{
+    resources.momentum += amount;
+
+    if (resources.momentum > 6)
+        resources.momentum = 6;
+}
+
+bool Entity::spend_momentum(int amount)
+{
+    if (resources.momentum < amount)
+        return false;
+
+    resources.momentum -= amount;
+    return true;
+}
+
+void Entity::reset_momentum()
+{
+    resources.momentum = 0;
 }
 
 // =======================

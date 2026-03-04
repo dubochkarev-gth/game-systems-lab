@@ -11,6 +11,7 @@
 #include "CombatTypes.h"
 #include "Inventory.h"
 #include "ItemSystem.h"
+#include "SkillSystem.h"
 
 using namespace std;
 
@@ -105,6 +106,7 @@ void executeAction(
 
 void applyActionResult(
     ActionResult &result,
+    Entity &actor,
     Entity &target);
 
 void startTurn(Entity &e);
@@ -198,7 +200,7 @@ public:
                     if (log.actions.size() > before)
                     {
                         ActionResult &last = log.actions.back();
-                        applyActionResult(last, *target);
+                        applyActionResult(last, *action.actor, *target);
 
                         statsMap[last.actor].damageDealt += last.damageApplied;
                         statsMap[last.target].damageBlocked += last.damageBlocked;
@@ -330,6 +332,10 @@ void renderBattleScreen(
         {
             std::cout << " G:" << e->get_guard();
         }
+        else if (e->getFaction() == Faction::Player)
+        {
+            std::cout << " M:" << e->get_momentum();
+        }
         else
         {
             if (e->get_focus() > 0)
@@ -399,6 +405,17 @@ void renderBattleScreen(
         {
             std::cout << r.actor << " uses Taunt and increases threat.";
         }
+        if (r.type == ActionType::Burst)
+        {
+            std::cout << r.actor << " hits with Bursted attack " << r.target
+                      << " for " << r.damageApplied << ".";
+
+            if (r.isCritical)
+                std::cout << " (CRITICAL)";
+
+            if (r.usedFocus)
+                std::cout << " (FOCUSED)";
+        }
 
         std::cout << std::endl;
 
@@ -451,6 +468,9 @@ void executeAction(const ResolvedAction &action,
     case ActionType::Taunt:
         result = action.actor->taunt();
         break;
+    case ActionType::Burst:
+        result = SkillSystem::burst(*action.actor, *action.target);
+        break;
     }
 
     log.add(result);
@@ -470,18 +490,32 @@ std::vector<Entity *> resolveTargets(
     if (action.targetType == TargetType::FirstAliveEnemy)
     {
         Entity *best = nullptr;
-        float maxThreat = -1.0f;
 
-        for (Entity *e : entities)
+        if (action.actor->getFaction() == Faction::Enemy)
         {
-            if (e != action.actor &&
-                e->is_alive() &&
-                e->getFaction() != action.actor->getFaction())
+            float maxThreat = -1.0f;
+
+            for (Entity *e : entities)
             {
-                if (e->get_threat() > maxThreat)
+                if (e->getFaction() == Faction::Player && e->is_alive())
                 {
-                    maxThreat = e->get_threat();
+                    if (e->get_threat() > maxThreat)
+                    {
+                        maxThreat = e->get_threat();
+                        best = e;
+                    }
+                }
+            }
+        }
+
+        else
+        {
+            for (Entity *e : entities)
+            {
+                if (e->getFaction() == Faction::Enemy && e->is_alive())
+                {
                     best = e;
+                    break;
                 }
             }
         }
@@ -535,6 +569,7 @@ bool validateAction(
 }
 
 void applyActionResult(ActionResult &result,
+                       Entity &actor,
                        Entity &target)
 {
     switch (result.type)
@@ -545,14 +580,21 @@ void applyActionResult(ActionResult &result,
         result.damageApplied = actualDamage;
         result.damageBlocked = result.damagePlanned - actualDamage;
         result.targetDied = !target.is_alive();
+        if (actor.getFaction() == Faction::Player && !actor.has_taunt())
+        {
+            actor.add_momentum(1);
+        }
         break;
     }
 
     case ActionType::Block:
     {
-        target.set_blocking(true);
-        target.add_focus(1);
-        target.add_guard(1);
+        actor.set_blocking(true);
+        actor.add_focus(1);
+        if (actor.has_taunt())
+        {
+            actor.add_guard(1);
+        }
         break;
     }
 
@@ -563,12 +605,20 @@ void applyActionResult(ActionResult &result,
         result.healedPlanned = target.get_hp() - before;
         break;
     }
+    case ActionType::Burst:
+    {
+        int actualDamage = target.receive_damage(result.damagePlanned);
+        result.damageApplied = actualDamage;
+        result.damageBlocked = result.damagePlanned - actualDamage;
+        result.targetDied = !target.is_alive();
+        break;
+    }
     }
 }
 
 TargetType targetTypeSelection(ActionType a)
 {
-    if (a == ActionType::Attack)
+    if (a == ActionType::Attack || a == ActionType::Burst)
         return TargetType::FirstAliveEnemy;
     else
         return TargetType::Self;
@@ -601,10 +651,12 @@ std::vector<PlannedAction> planTurn(
             std::cout << "1 - Attack\n";
             std::cout << "2 - Block\n";
             std::cout << "3 - Use Item\n";
-            if (actor->has_taunt())
+            if (actor->get_guard() >= 3)
                 std::cout << "4 - Taunt\n";
+            if (actor->get_momentum() >= 2)
+                std::cout << "5 - Burst\n";
 
-            while (choice < 1 || choice > 4)
+            while (choice < 1 || choice > 5)
             {
                 std::cin >> choice;
             }
@@ -615,6 +667,8 @@ std::vector<PlannedAction> planTurn(
                 action.type = ActionType::Block;
             else if (choice == 4 && actor->has_taunt())
                 action.type = ActionType::Taunt;
+            else if (choice == 5)
+                action.type = ActionType::Burst;
             else
                 action.type = ActionType::UseItem;
         }

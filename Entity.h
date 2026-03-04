@@ -4,9 +4,8 @@
 #include <memory>
 #include "CombatTypes.h"
 #include "Item.h"
-
-// Forward declaration
-class Inventory;
+#include "Resources.h"
+#include "Inventory.h"
 
 enum class Faction
 {
@@ -34,7 +33,7 @@ protected:
     float damageMultiplier = 1.0f;
     float threatMultiplier = 1.0f;
     float blockMultiplierFromEquip = 1.0f;
-    int guard = 0;
+    Resources resources;
     bool hasTauntSkill = false;
 
 public:
@@ -86,6 +85,11 @@ public:
     void add_guard(int amount);
     bool spend_guard(int amount);
     bool has_taunt() const;
+
+    int get_momentum() const;
+    void add_momentum(int amount);
+    bool spend_momentum(int amount);
+    void reset_momentum();
 };
 
 class Player : public Entity
