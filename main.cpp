@@ -696,10 +696,11 @@ std::vector<PlannedAction> planTurn(
 
 void startTurn(Entity &e) {
     // future: status tick, regen, focus decay
+    e.set_blocking(false);
 };
 
 void endTurn(Entity &e) {
-    // future: cleanup, state transitions
+    // future: status tick, regen, focus decay
 };
 
 void runSimulation(int runs)

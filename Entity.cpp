@@ -51,7 +51,6 @@ int Entity::receive_damage(int amount)
     {
         amount = static_cast<int>(
             amount * BLOCK_BONUS_MULTIPLIER * blockMultiplierFromEquip);
-        isBlocking = false;
     }
 
     hp -= amount;
