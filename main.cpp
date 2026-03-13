@@ -557,16 +557,12 @@ bool validateAction(
     }
 
     // 2. Target required for attack
-    if (action.type == ActionType::Attack && !target)
-    {
-        return false;
-    }
+    if ((action.type == ActionType::Attack || action.type == ActionType::Burst) && !target)
+    return false;
 
     // 3. Target must be alive for attack
-    if (action.type == ActionType::Attack && !target->is_alive())
-    {
-        return false;
-    }
+    if ((action.type == ActionType::Attack || action.type == ActionType::Burst) && !target->is_alive())
+    return false;
 
     // 4. Item availability
     if (action.type == ActionType::UseItem)
@@ -665,7 +661,7 @@ std::vector<PlannedAction> planTurn(
             std::cout << "2 - Block\n";
             if (actor->hasItems())
                 std::cout << "3 - Use Item\n";
-            if (actor->get_guard() >= 3)
+            if (actor->has_taunt() && actor->get_guard() >= 3)
                 std::cout << "4 - Taunt\n";
             if (actor->get_momentum() >= 2)
                 std::cout << "5 - Burst\n";
@@ -830,6 +826,7 @@ int main()
     tankCore.damageMultiplier = 0.85f;
     tankCore.threatMultiplier = 1.6f;
     tankCore.blockMultiplierFromEquip = 0.8f;
+    tankCore.grantsTaunt = true;
 
     Item dpsCore;
     dpsCore.name = "Executioner Blade";

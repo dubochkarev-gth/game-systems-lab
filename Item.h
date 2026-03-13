@@ -18,4 +18,6 @@ struct Item
     float damageMultiplier = 1.0f;
     float threatMultiplier = 1.0f;
     float blockMultiplierFromEquip = 1.0f;
+
+    bool grantsTaunt = false;
 };

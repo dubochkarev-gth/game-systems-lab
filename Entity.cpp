@@ -240,12 +240,10 @@ void Entity::equip(const Item &item)
     damageMultiplier *= item.damageMultiplier;
     threatMultiplier *= item.threatMultiplier;
     blockMultiplierFromEquip *= item.blockMultiplierFromEquip;
-    if (item.name == "Bulwark Armor")
+    if (item.grantsTaunt)
         {
             hasTauntSkill = true;
         }
-
-    std::cout << name << " equipped " << item.name << std::endl;
 }
 
 bool Entity::has_taunt() const
