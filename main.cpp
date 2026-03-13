@@ -826,7 +826,7 @@ int main()
     tankCore.type = ItemType::Equipment;
     tankCore.damageMultiplier = 0.85f;
     tankCore.threatMultiplier = 1.6f;
-    tankCore.blockMultiplierFromEquip = 0.8f;
+    tankCore.blockMultiplierFromEquip = 0.9f;
     tankCore.grantsTaunt = true;
 
     Item dpsCore;
